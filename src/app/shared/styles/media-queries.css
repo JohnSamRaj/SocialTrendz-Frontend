@@ -1,0 +1,156 @@
+/* Media Query Mixins for Responsive Design */
+
+/* Extra Small Devices (Portrait phones) */
+@media (max-width: 575.98px) {
+  :root {
+    --sidebar-width: 0;
+    --content-padding: 12px;
+    --font-size-base: 14px;
+    --font-size-small: 12px;
+    --font-size-heading: 18px;
+    --font-size-subheading: 16px;
+  }
+  
+  .app-main {
+    padding: 12px !important;
+  }
+  
+  .dashboard-grid, 
+  .stats-grid, 
+  .analytics-grid,
+  .audience-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  
+  .chart-wrapper {
+    height: 250px !important;
+  }
+  
+  .xs-hide {
+    display: none !important;
+  }
+  
+  .xs-show {
+    display: block !important;
+  }
+}
+
+/* Small Devices (Landscape phones) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  :root {
+    --sidebar-width: 200px;
+    --content-padding: 16px;
+    --font-size-base: 15px;
+    --font-size-small: 13px;
+    --font-size-heading: 20px;
+    --font-size-subheading: 17px;
+  }
+  
+  .sm-hide {
+    display: none !important;
+  }
+  
+  .sm-show {
+    display: block !important;
+  }
+  
+  .dashboard-grid, 
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  .analytics-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Medium Devices (Tablets) */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  :root {
+    --sidebar-width: 200px;
+    --content-padding: 20px;
+    --font-size-base: 15px;
+    --font-size-small: 13px;
+  }
+  
+  .content-creation-container {
+    flex-direction: column !important;
+  }
+  
+  .media-preview-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  
+  .md-hide {
+    display: none !important;
+  }
+  
+  .md-show {
+    display: block !important;
+  }
+}
+
+/* Large Devices (Desktops) */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  :root {
+    --sidebar-width: 240px;
+    --content-padding: 24px;
+  }
+  
+  .lg-hide {
+    display: none !important;
+  }
+  
+  .lg-show {
+    display: block !important;
+  }
+}
+
+/* Extra Large Devices (Large Desktops) */
+@media (min-width: 1200px) {
+  :root {
+    --sidebar-width: 260px;
+    --content-padding: 30px;
+  }
+  
+  .xl-hide {
+    display: none !important;
+  }
+  
+  .xl-show {
+    display: block !important;
+  }
+}
+
+/* Custom breakpoint for sidebar toggle */
+@media (max-width: 768px) {
+  .mobile-only {
+    display: block !important;
+  }
+  
+  .desktop-only {
+    display: none !important;
+  }
+  
+  .sidebar {
+    position: fixed !important;
+    left: 0;
+    top: 60px !important;
+    height: calc(100vh - 60px) !important;
+    width: 85% !important;
+    max-width: 320px !important;
+    z-index: 1000 !important;
+    transform: translateX(-100%) !important;
+    box-shadow: 5px 0 15px rgba(0, 0, 0, 0.2) !important;
+  }
+  
+  .sidebar.show {
+    transform: translateX(0) !important;
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+}

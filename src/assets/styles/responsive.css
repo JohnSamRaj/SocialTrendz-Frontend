@@ -1,0 +1,162 @@
+/* 
+* Responsive CSS for Social Media Manager
+* This file contains global responsive styles 
+*/
+
+/* Media Query Variables */
+:root {
+  --breakpoint-xs: 480px;
+  --breakpoint-sm: 576px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 992px;
+  --breakpoint-xl: 1200px;
+  --breakpoint-xxl: 1400px;
+}
+
+/* Small devices (landscape phones, 576px and up) */
+@media (min-width: 576px) {
+  .container {
+    max-width: 540px;
+  }
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) {
+  .container {
+    max-width: 720px;
+  }
+  
+  .main-content {
+    padding-top: 60px; /* Account for fixed header */
+  }
+}
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+  .container {
+    max-width: 960px;
+  }
+}
+
+/* Extra large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+  .container {
+    max-width: 1140px;
+  }
+}
+
+/* Extra extra large devices (larger desktops, 1400px and up) */
+@media (min-width: 1400px) {
+  .container {
+    max-width: 1320px;
+  }
+}
+
+/* Mobile (Phone) Styles */
+@media (max-width: 767.98px) {
+  body {
+    font-size: 14px;
+  }
+  
+  .hide-on-mobile {
+    display: none !important;
+  }
+  
+  .show-on-mobile {
+    display: block !important;
+  }
+  
+  /* Fix for header on mobile */
+  .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+  }
+  
+  /* Fix for main content on mobile to avoid overlap with header */
+  .main-content {
+    margin-top: 60px; /* Header height */
+  }
+  
+  /* Adjusted container padding on mobile */
+  .container, .container-fluid {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  
+  /* Form controls on mobile */
+  input, select, textarea {
+    font-size: 16px !important; /* Prevent zoom on iOS */
+  }
+}
+
+/* Tablet Styles */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .hide-on-tablet {
+    display: none !important;
+  }
+  
+  .show-on-tablet {
+    display: block !important;
+  }
+}
+
+/* Desktop Styles */
+@media (min-width: 992px) {
+  .hide-on-desktop {
+    display: none !important;
+  }
+  
+  .show-on-desktop {
+    display: block !important;
+  }
+  
+  /* Fix for sidebar and main content relationship */
+  .content-wrapper {
+    display: flex;
+  }
+  
+  .main-content {
+    margin-left: 250px; /* Width of sidebar */
+    width: calc(100% - 250px);
+    transition: margin-left 0.3s ease, width 0.3s ease;
+  }
+  
+  .main-content.sidebar-collapsed {
+    margin-left: 70px; /* Width of collapsed sidebar */
+    width: calc(100% - 70px);
+  }
+  
+  /* Fix sidebar position */
+  .sidebar {
+    position: fixed;
+    top: 60px; /* Header height */
+    left: 0;
+    height: calc(100vh - 60px);
+    z-index: 100;
+    overflow-y: auto;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+  
+  body {
+    background-color: #fff !important;
+  }
+  
+  a[href]:after {
+    content: " (" attr(href) ")";
+  }
+}

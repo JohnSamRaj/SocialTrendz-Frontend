@@ -1,0 +1,224 @@
+<div class="dashboard-container">
+  <!-- Modal Components -->
+  
+  <div class="dashboard-header">
+    <div class="welcome-section">
+      <h1>Dashboard</h1>
+      <p *ngIf="authService.getCurrentUser()">Welcome back, {{ authService.getCurrentUser()?.fullName }}</p>
+    </div>
+    <div class="actions">
+      <button class="btn-secondary get-started-btn" (click)="showOnboardingModal()">
+        <i class="fas fa-info-circle"></i> Get Started
+      </button>
+      <button class="btn-primary" routerLink="/content-creation">
+        <i class="fas fa-plus"></i> Create New Post
+      </button>
+    </div>
+  </div>
+
+  <app-onboarding-modal 
+    [(visible)]="isOnboardingModalVisible"
+    (completed)="onOnboardingCompleted()"
+    (skipped)="onOnboardingSkipped()">
+  </app-onboarding-modal>
+
+  <!-- Skeleton Loading State -->
+  <div class="skeleton-container" *ngIf="isLoading">
+    <!-- Skeleton Stats -->
+    <div class="stats-overview">
+      <div class="stat-card" *ngFor="let i of [1,2,3,4]">
+        <app-skeleton-loader type="circle" width="48px" height="48px"></app-skeleton-loader>
+        <div class="stat-info">
+          <app-skeleton-loader type="text" width="80px" height="20px"></app-skeleton-loader>
+          <app-skeleton-loader type="text" width="40px" height="24px"></app-skeleton-loader>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Skeleton Posts -->
+    <div class="content-section">
+      <div class="section-header">
+        <app-skeleton-loader type="title" width="200px"></app-skeleton-loader>
+        <app-skeleton-loader type="text" width="80px"></app-skeleton-loader>
+      </div>
+      
+      <div class="posts-grid">
+        <app-skeleton-card *ngFor="let i of [1,2,3]"></app-skeleton-card>
+      </div>
+    </div>
+    
+    <div class="content-section">
+      <div class="section-header">
+        <app-skeleton-loader type="title" width="200px"></app-skeleton-loader>
+        <app-skeleton-loader type="text" width="80px"></app-skeleton-loader>
+      </div>
+      
+      <div class="posts-grid">
+        <app-skeleton-card *ngFor="let i of [1,2,3]"></app-skeleton-card>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="error && !isLoading">
+    <div class="error-icon">
+      <i class="fas fa-exclamation-circle"></i>
+    </div>
+    <p>{{ error }}</p>
+    <button class="btn-secondary" (click)="loadDashboardData()">Try Again</button>
+  </div>
+
+
+
+  <!-- Dashboard Content -->
+  <div class="dashboard-content" *ngIf="!isLoading && !error">
+    <!-- Stats Overview -->
+    <div class="stats-overview">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-image"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Total Posts</h3>
+          <p class="stat-number">{{ posts.length }}</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Scheduled</h3>
+          <p class="stat-number">{{ getScheduledPostsCount() }}</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Drafts</h3>
+          <p class="stat-number">{{ getDraftPostsCount() }}</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-paper-plane"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Published</h3>
+          <p class="stat-number">{{ getPublishedPostsCount() }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Section
+    <div class="charts-section">
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>Engagement Rate</h3>
+          <span class="chart-period">Last 14 days</span>
+        </div>
+        <app-chart *ngIf="engagementData.labels" [type]="'line'" [data]="engagementData" [height]="250"></app-chart>
+        <div class="empty-chart" *ngIf="!engagementData.labels">
+          <i class="fas fa-chart-line"></i>
+          <p>No engagement data available</p>
+        </div>
+      </div>
+      
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>Followers Growth</h3>
+          <span class="chart-period">Last 7 days</span>
+        </div>
+        <app-chart *ngIf="growthData.labels" [type]="'bar'" [data]="growthData" [height]="250"></app-chart>
+        <div class="empty-chart" *ngIf="!growthData.labels">
+          <i class="fas fa-users"></i>
+          <p>No follower data available</p>
+        </div>
+      </div>
+    </div> -->
+
+    <!-- Upcoming Posts -->
+    <div class="content-section">
+      <div class="section-header">
+        <h2>Upcoming Posts</h2>
+        <a routerLink="/schedule" class="view-all">View All</a>
+      </div>
+      
+      <div class="posts-grid" *ngIf="scheduledPosts.length > 0">
+        <app-post-card 
+          *ngFor="let post of scheduledPosts" 
+          [post]="post"
+          (edit)="handleEdit($event)"
+          (delete)="handleDelete($event)"
+          (publish)="handlePublish($event)"
+          (schedule)="handleSchedule($event)"
+        ></app-post-card>
+      </div>
+      
+      <div class="empty-state" *ngIf="scheduledPosts.length === 0">
+        <div class="empty-icon">
+          <i class="fas fa-calendar-alt"></i>
+        </div>
+        <p>No upcoming posts scheduled</p>
+        <button class="btn-secondary" routerLink="/content-creation">Create a Post</button>
+      </div>
+    </div>
+
+    <!-- Recent Drafts -->
+    <div class="content-section">
+      <div class="section-header">
+        <h2>Recent Drafts</h2>
+        <a routerLink="/content-creation" class="view-all">View All</a>
+      </div>
+      
+      <div class="posts-grid" *ngIf="draftPosts.length > 0">
+        <app-post-card 
+          *ngFor="let post of draftPosts" 
+          [post]="post"
+          (edit)="handleEdit($event)"
+          (delete)="handleDelete($event)"
+          (publish)="handlePublish($event)"
+          (schedule)="handleSchedule($event)"
+        ></app-post-card>
+      </div>
+      
+      <div class="empty-state" *ngIf="draftPosts.length === 0">
+        <div class="empty-icon">
+          <i class="fas fa-file-alt"></i>
+        </div>
+        <p>No draft posts yet</p>
+        <button class="btn-secondary" routerLink="/content-creation">Create a Draft</button>
+      </div>
+    </div>
+
+    <!-- Recent Posts -->
+    <div class="content-section">
+      <div class="section-header">
+        <h2>Recent Posts</h2>
+        <a routerLink="/analytics" class="view-all">View Analytics</a>
+      </div>
+      
+      <div class="posts-grid" *ngIf="recentPosts.length > 0">
+        <app-post-card 
+          *ngFor="let post of recentPosts" 
+          [post]="post"
+          (edit)="handleEdit($event)"
+          (delete)="handleDelete($event)"
+        ></app-post-card>
+      </div>
+      
+      <div class="empty-state" *ngIf="recentPosts.length === 0">
+        <div class="empty-icon">
+          <i class="fas fa-images"></i>
+        </div>
+        <p>No published posts yet</p>
+        <button class="btn-secondary" routerLink="/content-creation">Create a Post</button>
+      </div>
+    </div>
+  </div>
+</div>

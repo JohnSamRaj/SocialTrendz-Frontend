@@ -1,0 +1,282 @@
+<div class="analytics-container">
+  <div class="analytics-header">
+    <div class="title-section">
+      <h1>Analytics Dashboard</h1>
+      <p>Insights and performance metrics for your Instagram content</p>
+    </div>
+    
+    <div class="timeframe-selector">
+      <label for="timeframe">Timeframe:</label>
+      <select id="timeframe" [(ngModel)]="selectedTimeframe" (change)="onTimeframeChange()">
+        <option value="7days">Last 7 days</option>
+        <option value="30days">Last 30 days</option>
+        <option value="90days">Last 90 days</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Skeleton Loading State -->
+  <div class="skeleton-container" *ngIf="isLoading">
+    <!-- Overview Stats Skeleton -->
+    <div class="overview-stats">
+      <div class="stat-card" *ngFor="let i of [1,2,3,4]">
+        <div class="stat-icon">
+          <app-skeleton-loader type="circle" width="48px" height="48px"></app-skeleton-loader>
+        </div>
+        <div class="stat-info">
+          <app-skeleton-loader type="text" width="120px"></app-skeleton-loader>
+          <app-skeleton-loader type="title" width="80px" height="28px"></app-skeleton-loader>
+          <app-skeleton-loader type="text" width="90px"></app-skeleton-loader>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Charts Skeleton -->
+    <div class="chart-section">
+      <div class="chart-container">
+        <app-skeleton-loader type="title" width="200px"></app-skeleton-loader>
+        <app-skeleton-loader type="rect" width="100%" height="300px"></app-skeleton-loader>
+      </div>
+      <div class="chart-container">
+        <app-skeleton-loader type="title" width="200px"></app-skeleton-loader>
+        <app-skeleton-loader type="rect" width="100%" height="300px"></app-skeleton-loader>
+      </div>
+    </div>
+    
+    <!-- Content Performance Skeleton -->
+    <div class="content-performance">
+      <app-skeleton-loader type="title" width="250px"></app-skeleton-loader>
+      <div class="performance-grid">
+        <app-skeleton-card *ngFor="let i of [1,2,3,4,5,6]"></app-skeleton-card>
+      </div>
+    </div>
+    
+    <!-- Audience Demographics Skeleton -->
+    <div class="audience-section">
+      <app-skeleton-loader type="title" width="250px"></app-skeleton-loader>
+      <div class="demographics-grid">
+        <div class="demographic-card" *ngFor="let i of [1,2,3,4]">
+          <app-skeleton-loader type="title" width="150px"></app-skeleton-loader>
+          <app-skeleton-loader type="rect" width="100%" height="200px"></app-skeleton-loader>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="error && !isLoading">
+    <div class="error-icon">
+      <i class="fas fa-exclamation-circle"></i>
+    </div>
+    <p>{{ error }}</p>
+    <button class="btn-secondary" (click)="loadAnalytics()">Try Again</button>
+  </div>
+
+  <!-- Analytics Content -->
+  <div class="analytics-content" *ngIf="!isLoading && !error && analytics">
+    <!-- Overview Stats -->
+    <div class="overview-stats">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Total Followers</h3>
+          <p class="stat-number">{{ formatNumber(analytics.accountGrowth[analytics.accountGrowth.length - 1].followers) }}</p>
+          <div class="stat-change" [class.positive]="getAudienceGrowth() > 0" [class.negative]="getAudienceGrowth() < 0">
+            <i class="fas" [class.fa-arrow-up]="getAudienceGrowth() > 0" [class.fa-arrow-down]="getAudienceGrowth() < 0"></i>
+            <span>{{ getAudienceGrowth() }} ({{ getAudienceGrowthPercentage().toFixed(2) }}%)</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Avg. Engagement Rate</h3>
+          <p class="stat-number">{{ getAverageEngagementRate().toFixed(2) }}%</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-eye"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Total Impressions</h3>
+          <p class="stat-number">{{ formatNumber(getTotalImpressions()) }}</p>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-bullseye"></i>
+        </div>
+        <div class="stat-info">
+          <h3>Total Reach</h3>
+          <p class="stat-number">{{ formatNumber(getTotalReach()) }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Charts -->
+    <div class="charts-row">
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3>Follower Growth</h3>
+        </div>
+        <app-chart 
+          *ngIf="followerGrowthData.labels" 
+          [type]="'line'" 
+          [data]="followerGrowthData" 
+          [height]="350"
+          [options]="{
+            scales: {
+              y: {
+                position: 'left',
+                title: {
+                  display: true,
+                  text: 'Followers'
+                }
+              },
+              y1: {
+                position: 'right',
+                title: {
+                  display: true,
+                  text: 'Growth Rate (%)'
+                },
+                grid: {
+                  drawOnChartArea: false
+                }
+              }
+            },
+            plugins: {
+              legend: {
+                labels: {
+                  color: 'var(--color-dark)'
+                }
+              }
+            },
+            backgroundColor: 'var(--color-background)'
+          }"
+        ></app-chart>
+      </div>
+      
+      <!-- <div class="chart-container">
+        <div class="chart-header">
+          <h3>Engagement Rate</h3>
+        </div>
+        <app-chart 
+          *ngIf="engagementRateData.labels" 
+          [type]="'line'" 
+          [data]="engagementRateData" 
+          [height]="350"
+        ></app-chart>
+      </div> -->
+    <!-- </div> -->
+
+    <!-- Secondary Charts -->
+    <!-- <div class="charts-row"> -->
+      <!-- <div class="chart-container">
+        <div class="chart-header">
+          <h3>Content Type Performance</h3>
+        </div>
+        <app-chart 
+          *ngIf="contentTypeData.labels" 
+          [type]="'doughnut'" 
+          [data]="contentTypeData" 
+          [height]="300"
+          [options]="{
+            plugins: {
+              legend: {
+                position: 'right'
+              }
+            }
+          }"
+        ></app-chart>
+      </div> -->
+      
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3>Audience Activity by Hour</h3>
+          <span class="best-time" *ngIf="analytics && analytics.audienceDemographics && analytics.audienceDemographics.activeHours && analytics.audienceDemographics.activeHours.length > 0">
+            Best time to post: {{ getBestPostingHour() }}
+          </span>
+        </div>
+        <app-chart 
+          *ngIf="hourlyActivityData.labels" 
+          [type]="'bar'" 
+          [data]="hourlyActivityData" 
+          [height]="300"
+        ></app-chart>
+      </div>
+    </div>
+
+    <!-- Audience Demographics -->
+    <div class="audience-section">
+      <h2>Audience Demographics</h2>
+      
+      <div class="demographics-grid">
+        <div class="demographic-card">
+          <h3>Age Distribution</h3>
+          <div class="demographic-bars">
+            <div class="demographic-bar" *ngFor="let age of analytics?.audienceDemographics?.ageRanges || []">
+              <div class="bar-label">{{ age.range }}</div>
+              <div class="bar-container">
+                <div class="bar-fill" [style.width.%]="age.percentage"></div>
+              </div>
+              <div class="bar-value">{{ age.percentage }}%</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="demographic-card">
+          <h3>Gender</h3>
+          <div class="gender-chart">
+            <div class="gender-item" *ngFor="let gender of analytics?.audienceDemographics?.genders || []">
+              <div class="gender-percentage" [ngStyle]="{'height': gender.percentage + '%', 'max-height': '150px'}">
+                <span>{{ gender.percentage }}%</span>
+              </div>
+              <div class="gender-label">{{ gender.gender }}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="demographic-card">
+          <h3>Top Locations</h3>
+          <div class="locations-list">
+            <div class="location-item" *ngFor="let location of analytics?.audienceDemographics?.topLocations || []">
+              <div class="location-name">{{ location.location }}</div>
+              <div class="location-bar">
+                <div class="location-fill" [style.width.%]="location.percentage"></div>
+              </div>
+              <div class="location-percentage">{{ location.percentage }}%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Performing Content -->
+    <div class="top-content-section">
+      <h2>Top Performing Content</h2>
+      
+      <div class="top-posts-grid" *ngIf="topPerformingPosts.length > 0">
+        <app-post-card 
+          *ngFor="let post of topPerformingPosts" 
+          [post]="post"
+          [showActions]="false"
+        ></app-post-card>
+      </div>
+      
+      <div class="empty-state" *ngIf="topPerformingPosts.length === 0">
+        <div class="empty-icon">
+          <i class="fas fa-chart-bar"></i>
+        </div>
+        <p>No published posts to analyze yet</p>
+      </div>
+    </div>
+  </div>
+</div>

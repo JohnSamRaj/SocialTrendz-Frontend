@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200px" height="150px" viewBox="0 0 200 150" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Finish</title>
+    <g id="Finish" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <circle id="Background" fill="#EDEACC" opacity="0.5" cx="100" cy="75" r="70"></circle>
+        
+        <!-- Success Check Mark -->
+        <circle id="CheckBackground" fill="#F14F0A" cx="100" cy="75" r="30"></circle>
+        <path d="M85,75 L95,85 L115,65" id="CheckMark" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+        
+        <!-- Decorative Elements -->
+        <circle id="Dot1" fill="#F27E0A" cx="60" cy="40" r="5"></circle>
+        <circle id="Dot2" fill="#F2A10A" cx="150" cy="50" r="4"></circle>
+        <circle id="Dot3" fill="#F2D70A" cx="40" cy="100" r="6"></circle>
+        <circle id="Dot4" fill="#F14F0A" cx="160" cy="110" r="3"></circle>
+        <circle id="Dot5" fill="#F2A10A" cx="130" cy="30" r="2"></circle>
+        
+        <!-- Celebration Lines -->
+        <path d="M70,30 L80,20" id="Line1" stroke="#F14F0A" stroke-width="1" stroke-linecap="round"></path>
+        <path d="M140,40 L150,30" id="Line2" stroke="#F2A10A" stroke-width="1" stroke-linecap="round"></path>
+        <path d="M170,70 L180,65" id="Line3" stroke="#F27E0A" stroke-width="1" stroke-linecap="round"></path>
+        <path d="M160,90 L170,95" id="Line4" stroke="#F2D70A" stroke-width="1" stroke-linecap="round"></path>
+        <path d="M30,70 L20,65" id="Line5" stroke="#F14F0A" stroke-width="1" stroke-linecap="round"></path>
+        <path d="M50,115 L45,125" id="Line6" stroke="#F2A10A" stroke-width="1" stroke-linecap="round"></path>
+        <path d="M140,120 L150,130" id="Line7" stroke="#F27E0A" stroke-width="1" stroke-linecap="round"></path>
+        
+        <!-- Success Text -->
+        <text id="SuccessText" font-family="Arial" font-size="12" font-weight="bold" fill="#333333" text-anchor="middle">
+            <tspan x="100" y="125">You're All Set!</tspan>
+        </text>
+    </g>
+</svg>

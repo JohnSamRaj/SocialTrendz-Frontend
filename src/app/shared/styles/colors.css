@@ -1,0 +1,32 @@
+/* Global Color Variables for the Orange/Yellow Scheme */
+
+:root {
+  /* Primary Colors */
+  --primary-dark: #F14F0A;    /* Dark Orange */
+  --primary: #F27E0A;         /* Orange */
+  --primary-light: #F2A10A;   /* Light Orange */
+  --accent: #F2D70A;          /* Yellow */
+  --background: #EDEACC;      /* Light Cream */
+  
+  /* Neutral Colors */
+  --text-dark: #333333;       /* Dark Gray (for main text) */
+  --text-medium: #555555;     /* Medium Gray (for secondary text) */
+  --text-light: #777777;      /* Light Gray (for tertiary text) */
+  --divider: #EEEEEE;         /* Very Light Gray (for dividers) */
+  
+  /* UI Feedback Colors */
+  --success: #4CAF50;         /* Green */
+  --warning: #FFC107;         /* Amber */
+  --error: #F44336;           /* Red */
+  --info: #2196F3;            /* Blue */
+  
+  /* Background Colors */
+  --background-light: #FFFFFF;   /* White */
+  --background-medium: #F8F8F8;  /* Off-White */
+  --background-dark: #E5E5E5;    /* Light Gray */
+  
+  /* Overlay Colors */
+  --overlay-light: rgba(0, 0, 0, 0.1);
+  --overlay-medium: rgba(0, 0, 0, 0.3);
+  --overlay-dark: rgba(0, 0, 0, 0.5);
+}

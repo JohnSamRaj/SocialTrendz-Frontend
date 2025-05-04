@@ -1,0 +1,388 @@
+<div class="content-creation-container">
+  <div class="content-header">
+    <h1>{{ isEditing ? 'Edit Post' : 'Create New Post' }}</h1>
+    <p>Create and manage your Instagram content</p>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="content-tabs">
+    <button 
+      class="tab-button" 
+      [class.active]="currentTab === 'create'"
+      (click)="switchTab('create')"
+    >
+      <i class="fas fa-plus"></i> Create Content
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="currentTab === 'drafts'"
+      (click)="switchTab('drafts')"
+    >
+      <i class="fas fa-save"></i> My Drafts
+    </button>
+  </div>
+
+  <!-- Error Message -->
+  <div class="error-message" *ngIf="error">
+    <i class="fas fa-exclamation-circle"></i>
+    <span>{{ error }}</span>
+    <button class="dismiss-btn" (click)="error = null">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <!-- Skeleton Loading State -->
+  <div class="skeleton-container" *ngIf="isLoading">
+    <div class="create-content">
+      <div class="content-form">
+        <!-- Instagram Preview Skeleton -->
+        <div class="form-section post-preview-section">
+          <app-skeleton-loader type="title" width="150px" height="24px"></app-skeleton-loader>
+          <div class="instagram-preview-skeleton">
+            <div class="preview-header">
+              <app-skeleton-loader type="circle" width="40px" height="40px"></app-skeleton-loader>
+              <app-skeleton-loader type="text" width="120px" height="16px"></app-skeleton-loader>
+            </div>
+            <app-skeleton-loader type="card" height="300px"></app-skeleton-loader>
+            <div class="preview-caption">
+              <app-skeleton-loader type="text" width="90%"></app-skeleton-loader>
+              <app-skeleton-loader type="text" width="80%"></app-skeleton-loader>
+              <app-skeleton-loader type="text" width="50%"></app-skeleton-loader>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Post Details Skeleton -->
+        <div class="form-section">
+          <app-skeleton-loader type="title" width="150px" height="24px"></app-skeleton-loader>
+          <div class="form-fields">
+            <app-skeleton-loader type="text" width="100%" height="40px"></app-skeleton-loader>
+            <app-skeleton-loader type="rect" width="100%" height="120px"></app-skeleton-loader>
+            <app-skeleton-loader type="text" width="100%" height="40px"></app-skeleton-loader>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Content Tab -->
+  <div class="create-content" *ngIf="currentTab === 'create' && !isLoading">
+    <div class="content-form">
+      <!-- Instagram Preview -->
+      <div class="form-section post-preview-section">
+        <h3>Post Preview</h3>
+        <app-instagram-preview
+          [caption]="newPost.caption"
+          [hashtags]="newPost.hashtags"
+          [mediaItems]="newPost.mediaItems"
+          [username]="username"
+          [userProfileImage]="profileImage"
+        ></app-instagram-preview>
+      </div>
+
+      <!-- Media Upload Section -->
+      <!-- Platform Selection Section -->
+      <div class="form-section">
+        <h3>Platforms</h3>
+        <p class="section-description">Select platforms to share your content</p>
+
+        <div class="platform-selection">
+          <div class="platform-selector">
+            <label for="platform-input" class="platform-label">Add Platform</label>
+            <div class="platform-input-container" (click)="togglePlatformDropdown()">
+              <input 
+                type="text" 
+                id="platform-input"
+                class="platform-input" 
+                placeholder="Select platforms..." 
+                [value]="getSelectedPlatformText()" 
+                readonly
+              >
+              <span class="dropdown-icon">
+                <i class="fas" [ngClass]="isPlatformDropdownOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+              </span>
+            </div>
+
+            <div class="platform-dropdown" *ngIf="isPlatformDropdownOpen">
+              <!-- All platforms option -->
+              <div class="platform-option all-platforms-option">
+                <label class="checkbox-container">
+                  <input 
+                    type="checkbox" 
+                    [checked]="isAllPlatformsSelected()" 
+                    (change)="onAllPlatformsSelectionChange($event)"
+                  />
+                  <span class="checkmark"></span>
+                  <div class="platform-info">
+                    <span class="platform-icon">
+                      <i class="fas fa-th-large"></i>
+                    </span>
+                    <span class="platform-name">All Platforms</span>
+                  </div>
+                </label>
+              </div>
+              <!-- Separator -->
+              <div class="dropdown-separator"></div>
+              <!-- Individual platforms -->
+              <div class="platform-option" *ngFor="let platform of availablePlatforms; trackBy: trackByPlatformId">
+                <label class="checkbox-container">
+                  <input 
+                    type="checkbox" 
+                    [checked]="selectedPlatforms[platform.id]" 
+                    (change)="onPlatformSelectionChange(platform.id, $any($event.target).checked)"
+                  />
+                  <span class="checkmark"></span>
+                  <div class="platform-info">
+                    <span class="platform-icon">
+                      <i class="fab" [ngClass]="'fa-' + platform.id"></i>
+                    </span>
+                    <span class="platform-name">{{ platform.name }}</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="platform-accounts" *ngIf="connectedAccounts.length > 0">
+            <div class="connected-account" *ngFor="let account of connectedAccounts; trackBy: trackByAccountId">
+              <img [appLazyLoadImage]="account.profilePicture || 'assets/images/default-profile.svg'" alt="Profile picture" class="account-image">
+              <div class="account-info">
+                <span class="account-name">{{ account.displayName || account.username }}</span>
+                <span class="account-platform">{{ account.platform }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+        
+      <div class="form-section">
+        <h3>Media</h3>
+        <div class="media-upload-area" [class.has-error]="mediaUploadError" *ngIf="newPost.mediaItems.length === 0">
+          <input 
+            type="file" 
+            id="media-upload" 
+            accept="image/*,video/*" 
+            (change)="handleFileInput($event)" 
+            multiple
+            class="hidden-input"
+          >
+          <label for="media-upload" class="upload-label">
+            <div class="upload-icon">
+              <i class="fas fa-cloud-upload-alt"></i>
+            </div>
+            <p>Drag & drop your photos/videos here or click to browse</p>
+            <span class="file-types">Supported formats: JPG, PNG, MP4</span>
+          </label>
+        </div>
+
+        <!-- Media Preview -->
+        <div class="media-preview-container" *ngIf="newPost.mediaItems.length > 0">
+          <div class="media-items">
+            <div class="media-item" *ngFor="let item of newPost.mediaItems; let i = index; trackBy: trackByIndex">
+              <div class="media-wrapper">
+                <img *ngIf="item.type === 'image'" [appLazyLoadImage]="item.url" alt="Media preview">
+                <video *ngIf="item.type === 'video'" [src]="item.url" controls></video>
+                <button class="remove-media" (click)="removeMedia(i)">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="add-more-media">
+              <input 
+                type="file" 
+                id="add-more-media" 
+                accept="image/*,video/*" 
+                (change)="handleFileInput($event)" 
+                multiple
+                class="hidden-input"
+              >
+              <label for="add-more-media" class="add-more-label">
+                <i class="fas fa-plus"></i>
+                <span>Add More</span>
+              </label>
+            </div>
+          </div>
+          
+          <div class="media-error" *ngIf="mediaUploadError">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>{{ mediaUploadError }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Caption Section -->
+      <div class="form-section">
+        <div class="section-header">
+          <h3>Caption</h3>
+          <button 
+            class="ai-generate-btn" 
+            (click)="generateCaption()" 
+            [disabled]="isGeneratingCaption"
+          >
+            <i class="fas" [class.fa-robot]="!isGeneratingCaption" [class.fa-spinner]="isGeneratingCaption" [class.fa-spin]="isGeneratingCaption"></i>
+            {{ isGeneratingCaption ? 'Generating...' : 'Generate with AI' }}
+          </button>
+        </div>
+        
+        <textarea 
+          class="caption-textarea" 
+          placeholder="Write a caption for your post..."
+          [(ngModel)]="newPost.caption"
+          rows="5"
+        ></textarea>
+        
+        <!-- AI Caption Suggestions -->
+        <div class="ai-suggestions" *ngIf="aiCaptionSuggestions.length > 0">
+          <h4>AI Suggestions:</h4>
+          <div class="suggestions-list">
+            <div 
+              class="suggestion-item" 
+              *ngFor="let suggestion of aiCaptionSuggestions"
+              (click)="selectAlternativeCaption(suggestion)"
+            >
+              <i class="fas fa-lightbulb"></i>
+              <p>{{ suggestion }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hashtags Section -->
+      <div class="form-section">
+        <div class="section-header">
+          <h3>Hashtags</h3>
+          <button 
+            class="ai-generate-btn" 
+            (click)="generateHashtags()" 
+            [disabled]="isGeneratingHashtags"
+          >
+            <i class="fas" [class.fa-hashtag]="!isGeneratingHashtags" [class.fa-spinner]="isGeneratingHashtags" [class.fa-spin]="isGeneratingHashtags"></i>
+            {{ isGeneratingHashtags ? 'Generating...' : 'Generate with AI' }}
+          </button>
+        </div>
+        
+        <textarea 
+          class="hashtags-textarea" 
+          placeholder="Enter hashtags separated by spaces..."
+          [(ngModel)]="hashtags"
+          (blur)="updateHashtags()"
+          rows="3"
+        ></textarea>
+        
+        <!-- AI Hashtag Suggestions -->
+        <div class="ai-suggestions" *ngIf="aiHashtagSuggestions.length > 0">
+          <h4>AI Suggestions:</h4>
+          <div class="suggestions-list">
+            <div 
+              class="suggestion-item" 
+              *ngFor="let suggestion of aiHashtagSuggestions"
+              (click)="selectAlternativeHashtags(suggestion)"
+            >
+              <i class="fas fa-hashtag"></i>
+              <p>{{ suggestion }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Hashtag Preview -->
+        <div class="hashtag-preview" *ngIf="newPost.hashtags.length > 0">
+          <span class="hashtag-badge" *ngFor="let tag of newPost.hashtags; trackBy: trackByIndex">#{{ tag }}</span>
+        </div>
+      </div>
+
+      <!-- Scheduling Section -->
+      <div class="form-section">
+        <h3>Posting Options</h3>
+        
+        <div class="scheduling-options">
+          <div class="schedule-item">
+            <h4>Schedule for later</h4>
+            <div class="schedule-inputs">
+              <div class="form-group">
+                <label for="schedule-date">Date</label>
+                <input 
+                  type="date" 
+                  id="schedule-date" 
+                  [(ngModel)]="selectedScheduleDate" 
+                  [min]="getMinDate()"
+                >
+              </div>
+              
+              <div class="form-group">
+                <label for="schedule-time">Time</label>
+                <input 
+                  type="time" 
+                  id="schedule-time" 
+                  [(ngModel)]="selectedScheduleTime"
+                >
+              </div>
+            </div>
+            
+            <button 
+              class="btn-primary schedule-btn" 
+              (click)="schedulePost()" 
+              [disabled]="isSaving"
+            >
+              <i *ngIf="isSaving" class="fas fa-spinner fa-spin"></i>
+              <i *ngIf="!isSaving" class="fas fa-calendar-check"></i>
+              {{ isSaving ? 'Scheduling...' : 'Schedule Post' }}
+            </button>
+          </div>
+          
+          <div class="action-buttons">
+            <button 
+              class="btn-outline save-draft-btn" 
+              (click)="saveAsDraft()" 
+              [disabled]="isSaving"
+            >
+              <i *ngIf="isSaving" class="fas fa-spinner fa-spin"></i>
+              <i *ngIf="!isSaving" class="fas fa-save"></i>
+              {{ isSaving ? 'Saving...' : 'Save as Draft' }}
+            </button>
+            
+            <button 
+              class="btn-primary publish-btn" 
+              (click)="publishNow()" 
+              [disabled]="isSaving"
+            >
+              <i *ngIf="isSaving" class="fas fa-spinner fa-spin"></i>
+              <i *ngIf="!isSaving" class="fas fa-paper-plane"></i>
+              {{ isSaving ? 'Publishing...' : 'Publish Now' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drafts Tab -->
+  <div class="drafts-content" *ngIf="currentTab === 'drafts' && !isLoading">
+    <div class="drafts-header">
+      <h2>My Drafts</h2>
+      <button class="btn-primary new-draft-btn" (click)="switchTab('create')">
+        <i class="fas fa-plus"></i> Create New Draft
+      </button>
+    </div>
+    
+    <div class="drafts-grid" *ngIf="allDrafts.length > 0">
+      <app-post-card 
+        *ngFor="let draft of allDrafts; trackBy: trackByPostId" 
+        [post]="draft"
+        (edit)="editDraft($event)"
+        (delete)="deleteDraft($event)"
+        (publish)="publishDraft($event)"
+        (schedule)="scheduleDraft($event)"
+      ></app-post-card>
+    </div>
+    
+    <div class="empty-drafts" *ngIf="allDrafts.length === 0">
+      <div class="empty-icon">
+        <i class="fas fa-file-alt"></i>
+      </div>
+      <h3>No drafts yet</h3>
+      <p>Create your first draft to see it here</p>
+      <button class="btn-primary" (click)="switchTab('create')">Create Draft</button>
+    </div>
+  </div>
+</div>

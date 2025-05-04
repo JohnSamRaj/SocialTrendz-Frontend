@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200px" height="150px" viewBox="0 0 200 150" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Content</title>
+    <g id="Content" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <circle id="Background" fill="#F27E0A" opacity="0.2" cx="100" cy="75" r="70"></circle>
+        <rect id="Calendar" stroke="#F14F0A" stroke-width="2" fill="#FFFFFF" x="50" y="40" width="100" height="80" rx="4"></rect>
+        <rect id="Header" fill="#F14F0A" x="50" y="40" width="100" height="20" rx="4"></rect>
+        <text id="Month" font-family="Arial" font-size="12" font-weight="bold" fill="#FFFFFF">
+            <tspan x="90" y="55">APRIL</tspan>
+        </text>
+        <line x1="50" y1="60" x2="150" y2="60" id="Line" stroke="#F27E0A" stroke-width="1"></line>
+        <g id="WeekDays" transform="translate(60, 65)" fill="#F27E0A">
+            <text font-family="Arial" font-size="8" font-weight="normal">
+                <tspan x="0" y="10">S</tspan>
+            </text>
+            <text font-family="Arial" font-size="8" font-weight="normal">
+                <tspan x="12" y="10">M</tspan>
+            </text>
+            <text font-family="Arial" font-size="8" font-weight="normal">
+                <tspan x="24" y="10">T</tspan>
+            </text>
+            <text font-family="Arial" font-size="8" font-weight="normal">
+                <tspan x="36" y="10">W</tspan>
+            </text>
+            <text font-family="Arial" font-size="8" font-weight="normal">
+                <tspan x="48" y="10">T</tspan>
+            </text>
+            <text font-family="Arial" font-size="8" font-weight="normal">
+                <tspan x="60" y="10">F</tspan>
+            </text>
+            <text font-family="Arial" font-size="8" font-weight="normal">
+                <tspan x="72" y="10">S</tspan>
+            </text>
+        </g>
+        <line x1="50" y1="80" x2="150" y2="80" id="Line2" stroke="#F27E0A" stroke-width="1"></line>
+        <g id="DayNumbers" transform="translate(60, 85)" fill="#333333">
+            <text font-family="Arial" font-size="8" font-weight="normal">
+                <tspan x="0" y="10">1</tspan>
+            </text>
+            <text font-family="Arial" font-size="8" font-weight="normal">
+                <tspan x="12" y="10">2</tspan>
+            </text>
+            <text font-family="Arial" font-size="8" font-weight="normal">
+                <tspan x="24" y="10">3</tspan>
+            </text>
+            <text font-family="Arial" font-size="8" font-weight="normal">
+                <tspan x="36" y="10">4</tspan>
+            </text>
+            <text font-family="Arial" font-size="8" font-weight="normal">
+                <tspan x="48" y="10">5</tspan>
+            </text>
+            <text font-family="Arial" font-size="8" font-weight="normal">
+                <tspan x="60" y="10">6</tspan>
+            </text>
+            <text font-family="Arial" font-size="8" font-weight="normal">
+                <tspan x="72" y="10">7</tspan>
+            </text>
+        </g>
+        <circle id="SelectedDay" fill="#F2A10A" cx="96" cy="95" r="8"></circle>
+        <text id="ScheduleDay" font-family="Arial" font-size="8" font-weight="bold" fill="#FFFFFF">
+            <tspan x="93" y="98">4</tspan>
+        </text>
+        <rect id="Post" fill="#F14F0A" x="75" y="105" width="50" height="5" rx="2"></rect>
+        <circle id="SmallIcon" fill="#F2D70A" cx="130" cy="100" r="5"></circle>
+    </g>
+</svg>

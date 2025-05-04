@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200px" height="150px" viewBox="0 0 200 150" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Platforms</title>
+    <g id="Platforms" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <circle id="Background" fill="#F14F0A" opacity="0.2" cx="100" cy="75" r="70"></circle>
+        
+        <!-- Instagram Platform Icon -->
+        <circle id="InstagramBg" fill="#FFFFFF" cx="70" cy="60" r="20"></circle>
+        <circle id="InstagramOuterCircle" stroke="#F14F0A" stroke-width="2" cx="70" cy="60" r="16"></circle>
+        <circle id="InstagramInnerCircle" fill="#F14F0A" cx="70" cy="60" r="4"></circle>
+        <circle id="InstagramDot" fill="#F14F0A" cx="82" cy="48" r="2"></circle>
+        
+        <!-- Twitter/X Platform Icon -->
+        <circle id="TwitterBg" fill="#FFFFFF" cx="130" cy="60" r="20"></circle>
+        <path d="M120,52 L125,58 L117,65 M125,52 L140,68" id="TwitterX" stroke="#F14F0A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+        
+        <!-- Facebook Platform Icon -->
+        <circle id="FacebookBg" fill="#FFFFFF" cx="70" cy="110" r="20"></circle>
+        <path d="M70,95 L70,125 M60,105 L80,105" id="FacebookPlus" stroke="#F14F0A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+        
+        <!-- LinkedIn Platform Icon -->
+        <circle id="LinkedInBg" fill="#FFFFFF" cx="130" cy="110" r="20"></circle>
+        <rect id="LinkedInOutline" stroke="#F14F0A" stroke-width="2" x="117" y="98" width="26" height="24" rx="2"></rect>
+        <path d="M123,105 L123,115 M123,100 L123,101 M130,105 C130,105 130,109 135,109 C135,109 135,115 135,115 M130,105 C130,105 130,109 126,109 C126,109 126,115 126,115" id="LinkedInLetters" stroke="#F14F0A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+        
+        <!-- Connection Lines -->
+        <path d="M90,60 L110,60" id="Connection1" stroke="#F2A10A" stroke-width="1" stroke-dasharray="3,2"></path>
+        <path d="M70,80 L70,90" id="Connection2" stroke="#F2A10A" stroke-width="1" stroke-dasharray="3,2"></path>
+        <path d="M130,80 L130,90" id="Connection3" stroke="#F2A10A" stroke-width="1" stroke-dasharray="3,2"></path>
+        <path d="M90,110 L110,110" id="Connection4" stroke="#F2A10A" stroke-width="1" stroke-dasharray="3,2"></path>
+        
+        <!-- Center Icon -->
+        <circle id="CenterBg" fill="#F2D70A" cx="100" cy="75" r="15"></circle>
+        <text id="SMM" font-family="Arial" font-size="10" font-weight="bold" fill="#FFFFFF" text-anchor="middle">
+            <tspan x="100" y="78">SMM</tspan>
+        </text>
+    </g>
+</svg>

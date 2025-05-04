@@ -1,0 +1,222 @@
+<div class="auth-container">
+  <div class="auth-content">
+    <!-- OTP Verification Modal -->
+    <app-otp-verification 
+      *ngIf="showOtpVerification" 
+      [email]="otpEmail" 
+      (verified)="onOtpVerified($event)" 
+      (close)="onOtpModalClosed()">
+    </app-otp-verification>
+    
+    <div class="auth-form-container">
+      <div class="auth-header">
+        <h1>Social<span>Trendz</span></h1>
+        <p>Manage all your social media content in one place</p>
+      </div>
+
+      <!-- Success Message -->
+      <div *ngIf="successMessage" class="success-message">
+        {{ successMessage }}
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+      
+      <!-- Skeleton Loading State -->
+      <div class="skeleton-container" *ngIf="isLoading">
+        <app-skeleton-loader type="title" width="150px" height="30px"></app-skeleton-loader>
+        <div class="form-group" *ngFor="let i of [1, 2]">
+          <app-skeleton-loader type="text" width="100px" height="20px"></app-skeleton-loader>
+          <app-skeleton-loader type="rect" width="100%" height="40px"></app-skeleton-loader>
+        </div>
+        <app-skeleton-loader type="rect" width="100%" height="45px"></app-skeleton-loader>
+        <div class="social-auth-skeleton">
+          <app-skeleton-loader type="rect" width="48%" height="45px"></app-skeleton-loader>
+          <app-skeleton-loader type="rect" width="48%" height="45px"></app-skeleton-loader>
+        </div>
+      </div>
+
+      <!-- Login Form -->
+      <form *ngIf="isLogin" [formGroup]="loginForm" (ngSubmit)="onLoginSubmit()" class="auth-form">
+        <h2>Log in to your account</h2>
+
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <input 
+            type="email" 
+            id="loginEmail" 
+            formControlName="email"
+            placeholder="yourname@example.com"
+            [class.invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+          >
+          <div class="validation-error" *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+            <span *ngIf="loginForm.get('email')?.errors?.['required']">Email is required</span>
+            <span *ngIf="loginForm.get('email')?.errors?.['email']">Please enter a valid email</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input 
+            type="password" 
+            id="loginPassword" 
+            formControlName="password"
+            placeholder="Enter your password"
+            [class.invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+          >
+          <div class="validation-error" *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+            <span *ngIf="loginForm.get('password')?.errors?.['required']">Password is required</span>
+            <span *ngIf="loginForm.get('password')?.errors?.['minlength']">Password must be at least 6 characters</span>
+          </div>
+          <div class="forgot-password-link">
+            <a [routerLink]="['/auth/forgot-password']">Forgot Password?</a>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" [disabled]="loginForm.invalid || isLoading">
+            <i *ngIf="isLoading" class="fas fa-spinner fa-spin"></i>
+            <span *ngIf="!isLoading">Log In</span>
+          </button>
+        </div>
+
+        <div class="social-login">
+          <p>Or log in with</p>
+          <div class="social-buttons">
+            <button type="button" class="btn-social google" (click)="loginWithGoogle()" [disabled]="isLoading">
+              <i class="fab fa-google"></i>
+              <span>Google</span>
+            </button>
+            <button type="button" class="btn-social apple" (click)="loginWithApple()" [disabled]="isLoading">
+              <i class="fab fa-apple"></i>
+              <span>Apple</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="auth-footer">
+          <p>Don't have an account? <a (click)="toggleView()">Sign up</a></p>
+        </div>
+      </form>
+
+      <!-- Register Form -->
+      <form *ngIf="!isLogin" [formGroup]="registerForm" (ngSubmit)="onRegisterSubmit()" class="auth-form">
+        <h2>Create a new account</h2>
+
+        <div class="form-group">
+          <label for="fullName">Full Name</label>
+          <input 
+            type="text" 
+            id="fullName" 
+            formControlName="fullName"
+            placeholder="Enter your full name"
+            [class.invalid]="registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched"
+          >
+          <div class="validation-error" *ngIf="registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched">
+            <span *ngIf="registerForm.get('fullName')?.errors?.['required']">Full name is required</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="registerEmail">Email</label>
+          <input 
+            type="email" 
+            id="registerEmail" 
+            formControlName="email"
+            placeholder="yourname@example.com"
+            [class.invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
+          >
+          <div class="validation-error" *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
+            <span *ngIf="registerForm.get('email')?.errors?.['required']">Email is required</span>
+            <span *ngIf="registerForm.get('email')?.errors?.['email']">Please enter a valid email</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="registerPassword">Password</label>
+          <input 
+            type="password" 
+            id="registerPassword" 
+            formControlName="password"
+            placeholder="Create a password"
+            [class.invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
+          >
+          <div class="validation-error" *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
+            <span *ngIf="registerForm.get('password')?.errors?.['required']">Password is required</span>
+            <span *ngIf="registerForm.get('password')?.errors?.['minlength']">Password must be at least 6 characters</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirm Password</label>
+          <input 
+            type="password" 
+            id="confirmPassword" 
+            formControlName="confirmPassword"
+            placeholder="Confirm your password"
+            [class.invalid]="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched || registerForm.hasError('mismatch') && registerForm.get('confirmPassword')?.touched"
+          >
+          <div class="validation-error" *ngIf="(registerForm.get('confirmPassword')?.invalid || registerForm.hasError('mismatch')) && registerForm.get('confirmPassword')?.touched">
+            <span *ngIf="registerForm.get('confirmPassword')?.errors?.['required']">Please confirm your password</span>
+            <span *ngIf="registerForm.hasError('mismatch')">Passwords do not match</span>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" [disabled]="registerForm.invalid || isLoading">
+            <i *ngIf="isLoading" class="fas fa-spinner fa-spin"></i>
+            <span *ngIf="!isLoading">Sign Up</span>
+          </button>
+        </div>
+
+        <div class="social-login">
+          <p>Or sign up with</p>
+          <div class="social-buttons">
+            <button type="button" class="btn-social google" (click)="loginWithGoogle()" [disabled]="isLoading">
+              <i class="fab fa-google"></i>
+              <span>Google</span>
+            </button>
+            <button type="button" class="btn-social apple" (click)="loginWithApple()" [disabled]="isLoading">
+              <i class="fab fa-apple"></i>
+              <span>Apple</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="auth-footer">
+          <p>Already have an account? <a (click)="toggleView()">Log in</a></p>
+        </div>
+      </form>
+    </div>
+
+    <div class="auth-hero">
+      <div class="hero-content">
+        <h2>All your social media in one place</h2>
+        <p>Create, schedule, and analyze your Instagram content with powerful AI assistance.</p>
+        <div class="hero-features">
+          <div class="feature">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Schedule posts in advance</span>
+          </div>
+          <div class="feature">
+            <i class="fas fa-chart-line"></i>
+            <span>Analyze your performance</span>
+          </div>
+          <div class="feature">
+            <i class="fas fa-robot"></i>
+            <span>AI-powered content generation</span>
+          </div>
+          <div class="feature">
+            <i class="fas fa-hashtag"></i>
+            <span>Automatic hashtag suggestions</span>
+          </div>
+        </div>
+        <div class="hero-image">
+          <img src="https://images.unsplash.com/photo-1496449903678-68ddcb189a24" alt="Social Media Dashboard">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

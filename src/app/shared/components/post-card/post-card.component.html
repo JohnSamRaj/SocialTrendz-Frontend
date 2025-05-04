@@ -1,0 +1,107 @@
+<div class="post-card" [class.has-media]="post.mediaItems && post.mediaItems.length">
+  <div class="post-status" *ngIf="showStatus">
+    <span [class]="getStatusClass()">{{ getStatusLabel() }}</span>
+    <span *ngIf="post.status === PostStatus.SCHEDULED && post.scheduledFor">
+      {{ getFormattedDate(post.scheduledFor) }}
+    </span>
+    <span *ngIf="post.status === PostStatus.PUBLISHED && post.publishedAt">
+      {{ getFormattedDate(post.publishedAt) }}
+    </span>
+  </div>
+  
+  <div class="post-media" *ngIf="post.mediaItems && post.mediaItems.length">
+    <div class="media-container">
+      <!-- Show image for image type with lazy loading -->
+      <img *ngIf="post.mediaItems[0].type === 'image'" class="image-placeholder" [appLazyLoadImage]="post.mediaItems[0].url" alt="Post image">
+      
+      <!-- Show video for video type -->
+      <div *ngIf="post.mediaItems[0].type === 'video'" class="video-container">
+        <video [src]="post.mediaItems[0].url" controls></video>
+        <div class="video-indicator">
+          <i class="fas fa-play-circle"></i>
+        </div>
+      </div>
+      
+      <!-- Show multiple items indicator -->
+      <div class="media-count" *ngIf="post.mediaItems.length > 1">
+        <i class="fas fa-clone"></i>
+        {{ post.mediaItems.length }}
+      </div>
+    </div>
+  </div>
+  
+  <div class="post-content">
+    <div class="post-caption">
+      {{ post.caption }}
+    </div>
+    
+    <div class="post-hashtags" *ngIf="post.hashtags && post.hashtags.length">
+      <span *ngFor="let tag of post.hashtags; trackBy: trackByIndex" class="hashtag">#{{ tag }}</span>
+    </div>
+    
+    <div class="post-engagement" *ngIf="post.engagement">
+      <div class="engagement-stat">
+        <i class="far fa-heart"></i>
+        <span>{{ post.engagement.likes }}</span>
+      </div>
+      <div class="engagement-stat">
+        <i class="far fa-comment"></i>
+        <span>{{ post.engagement.comments }}</span>
+      </div>
+      <div class="engagement-stat">
+        <i class="far fa-bookmark"></i>
+        <span>{{ post.engagement.saves }}</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="post-actions" *ngIf="showActions">
+    <button class="btn-icon" (click)="toggleOptions()">
+      <i class="fas fa-ellipsis-h"></i>
+    </button>
+    
+    <div class="options-dropdown" *ngIf="isOptionsOpen">
+      <button (click)="onEdit()">
+        <i class="fas fa-edit"></i> Edit
+      </button>
+      <button (click)="toggleSchedule()">
+        <i class="fas fa-calendar-alt"></i> Schedule
+      </button>
+      <button (click)="onPublish()" *ngIf="post.status !== PostStatus.PUBLISHED">
+        <i class="fas fa-paper-plane"></i> Publish Now
+      </button>
+      <button (click)="onDelete()" class="delete-action">
+        <i class="fas fa-trash"></i> Delete
+      </button>
+    </div>
+    
+    <div class="schedule-dropdown" *ngIf="isScheduleOpen">
+      <div class="schedule-form">
+        <h3>Schedule Post</h3>
+        <div class="form-group">
+          <label for="schedule-date">Date</label>
+          <input 
+            type="date" 
+            id="schedule-date" 
+            [(ngModel)]="selectedDate" 
+            [min]="getMinDate()"
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="schedule-time">Time</label>
+          <input 
+            type="time" 
+            id="schedule-time" 
+            [(ngModel)]="selectedTime"
+          >
+        </div>
+        
+        <div class="schedule-actions">
+          <button (click)="isScheduleOpen = false" class="btn-outline">Cancel</button>
+          <button (click)="onScheduleSubmit()" class="btn-primary">Schedule</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,107 @@
+<div class="otp-verification-modal">
+  <div class="modal-backdrop" (click)="closeModal()"></div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Verify Email Address</h2>
+      <button class="close-button" (click)="closeModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <p class="verification-message">
+        Please enter the 6-digit verification code sent to <strong>{{ email }}</strong>
+      </p>
+      
+      <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+      
+      <form [formGroup]="otpForm" (ngSubmit)="onSubmit()" class="otp-form">
+        <div class="otp-input-container">
+          <input 
+            type="text" 
+            class="otp-input" 
+            formControlName="digit1" 
+            maxlength="1" 
+            autocomplete="off"
+            (input)="onDigitInput($event, digit2)"
+            (keydown)="onKeyDown($event)"
+            #digit1
+            autofocus
+          >
+          <input 
+            type="text" 
+            class="otp-input" 
+            formControlName="digit2" 
+            maxlength="1" 
+            autocomplete="off"
+            (input)="onDigitInput($event, digit3, digit1)"
+            (keydown)="onKeyDown($event, digit1)"
+            #digit2
+          >
+          <input 
+            type="text" 
+            class="otp-input" 
+            formControlName="digit3" 
+            maxlength="1" 
+            autocomplete="off"
+            (input)="onDigitInput($event, digit4, digit2)"
+            (keydown)="onKeyDown($event, digit2)"
+            #digit3
+          >
+          <input 
+            type="text" 
+            class="otp-input" 
+            formControlName="digit4" 
+            maxlength="1" 
+            autocomplete="off"
+            (input)="onDigitInput($event, digit5, digit3)"
+            (keydown)="onKeyDown($event, digit3)"
+            #digit4
+          >
+          <input 
+            type="text" 
+            class="otp-input" 
+            formControlName="digit5" 
+            maxlength="1" 
+            autocomplete="off"
+            (input)="onDigitInput($event, digit6, digit4)"
+            (keydown)="onKeyDown($event, digit4)"
+            #digit5
+          >
+          <input 
+            type="text" 
+            class="otp-input" 
+            formControlName="digit6" 
+            maxlength="1" 
+            autocomplete="off"
+            (input)="onDigitInput($event, undefined, digit5)"
+            (keydown)="onKeyDown($event, digit5)"
+            #digit6
+          >
+        </div>
+        
+        <div class="resend-container">
+          <button type="button" 
+            [disabled]="resendTimer > 0 || isLoading" 
+            (click)="resendOtp()" 
+            class="resend-button"
+          >
+            Resend Code
+          </button>
+          <span *ngIf="resendTimer > 0" class="resend-timer">
+            ({{ resendTimer }}s)
+          </span>
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" [disabled]="otpForm.invalid || isLoading">
+            <i *ngIf="isLoading" class="fas fa-spinner fa-spin"></i>
+            <span *ngIf="!isLoading">Verify</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

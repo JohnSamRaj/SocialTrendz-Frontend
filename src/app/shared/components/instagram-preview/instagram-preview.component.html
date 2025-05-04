@@ -1,0 +1,99 @@
+<div class="instagram-preview">
+  <!-- Post Header -->
+  <div class="instagram-header">
+    <img [appLazyLoadImage]="userProfileImage" alt="Profile" class="profile-img">
+    <div class="username">{{ username }}</div>
+    <div class="more-options">
+      <i class="fas fa-ellipsis-h"></i>
+    </div>
+  </div>
+  
+  <!-- Post Content -->
+  <div class="post-content">
+    <!-- If no media, show placeholder -->
+    <div *ngIf="!currentMedia" class="media-placeholder">
+      <div style="height: 350px; display: flex; align-items: center; justify-content: center; color: #8e8e8e;">
+        No media uploaded
+      </div>
+    </div>
+    
+    <!-- Display current media (image or video) with proper aspect ratio handling -->
+    <ng-container *ngIf="currentMedia">
+      <div class="media-container">
+        <!-- Images with lazy loading -->
+        <img *ngIf="currentMedia.type === 'image'" 
+             [appLazyLoadImage]="currentMedia.url" 
+             alt="Post image"
+             class="instagram-media"
+             [ngClass]="getMediaOrientation(currentMedia)">
+        
+        <!-- Videos -->
+        <video *ngIf="currentMedia.type === 'video'" 
+               [src]="currentMedia.url" 
+               controls
+               class="instagram-media"
+               [ngClass]="getMediaOrientation(currentMedia)"></video>
+      </div>
+    </ng-container>
+    
+    <!-- Carousel navigation (only if multiple media items) -->
+    <div *ngIf="mediaItems.length > 1" class="carousel-navigation">
+      <button 
+        class="carousel-btn" 
+        [disabled]="currentSlide === 0" 
+        (click)="prevSlide()"
+      >
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      <button 
+        class="carousel-btn" 
+        [disabled]="currentSlide === mediaItems.length - 1" 
+        (click)="nextSlide()"
+      >
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+    
+    <!-- Carousel indicators (only if multiple media items) -->
+    <div *ngIf="mediaItems.length > 1" class="carousel-indicators">
+      <div 
+        *ngFor="let media of mediaItems; let i = index; trackBy: trackByMediaId" 
+        class="indicator" 
+        [ngClass]="{'active': i === currentSlide}"
+      ></div>
+    </div>
+  </div>
+  
+  <!-- Post Actions -->
+  <div class="post-actions">
+    <div class="action-btn">
+      <i class="far fa-heart"></i>
+    </div>
+    <div class="action-btn">
+      <i class="far fa-comment"></i>
+    </div>
+    <div class="action-btn">
+      <i class="far fa-paper-plane"></i>
+    </div>
+    <div class="save-btn">
+      <i class="far fa-bookmark"></i>
+    </div>
+  </div>
+  
+  <!-- Post Details -->
+  <div class="post-likes">0 likes</div>
+  
+  <!-- Caption -->
+  <div *ngIf="formattedCaption" class="post-caption">
+    <span class="caption-username">{{ username }}</span>
+    {{ formattedCaption }}
+  </div>
+  
+  <!-- Hashtags -->
+  <div *ngIf="formattedHashtags" class="post-caption">
+    <span class="hashtags">{{ formattedHashtags }}</span>
+  </div>
+  
+  <!-- Date -->
+  <div class="post-date">{{ formattedDate }}</div>
+</div>

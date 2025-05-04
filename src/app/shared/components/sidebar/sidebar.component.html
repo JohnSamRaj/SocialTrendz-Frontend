@@ -1,0 +1,74 @@
+<aside class="sidebar" [class.collapsed]="isCollapsed">
+  <div class="sidebar-header">
+    <div class="platform-selector" (click)="togglePlatformDropdown()">
+      <i class="fab fa-instagram" *ngIf="selectedPlatform === 'instagram'"></i>
+      <i class="fas fa-th-large" *ngIf="selectedPlatform === 'all'"></i>
+      <span class="platform-name" [class.desktop-collapsed]="isCollapsed">{{ platformDisplayName }}</span>
+      <i class="fas fa-chevron-down dropdown-arrow" [class.desktop-collapsed]="isCollapsed" [class.rotated]="showPlatformDropdown"></i>
+    </div>
+    
+    <!-- Desktop and tablet collapse button, always visible -->
+    <button class="toggle-btn" (click)="toggleSidebar()">
+      <i class="fas" [class.fa-chevron-left]="!isCollapsed" [class.fa-chevron-right]="isCollapsed"></i>
+    </button>
+    
+    <!-- Mobile close button - with improved click handler -->
+    <button class="mobile-close mobile-only" (click)="closeSidebar()" aria-label="Close sidebar">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+  
+  <!-- Mobile search field -->
+  <div class="mobile-search mobile-only">
+    <div class="search-input">
+      <i class="fas fa-search"></i>
+      <input type="text" placeholder="Search...">
+    </div>
+  </div>
+  
+  <!-- Platform dropdown menu -->
+  <div class="platform-dropdown" [class.show]="showPlatformDropdown">
+    <div class="dropdown-option" (click)="selectPlatform('all')">
+      <i class="fas fa-th-large"></i>
+      <span>All Platforms</span>
+    </div>
+    <div class="dropdown-option" (click)="selectPlatform('instagram')">
+      <i class="fab fa-instagram"></i>
+      <span>Instagram</span>
+    </div>
+    <div class="dropdown-option add-account" (click)="showAddAccount()">
+      <i class="fas fa-plus-circle"></i>
+      <span>Add Account</span>
+    </div>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <ul>
+      <li *ngFor="let item of navItems">
+        <a [routerLink]="item.route" [class.active]="item.active" (click)="onNavItemClick()">
+          <i class="fas {{ item.icon }}"></i>
+          <span class="nav-label" [class.desktop-collapsed]="isCollapsed">{{ item.label }}</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+  
+  <!-- Footer for expanded sidebar (both desktop and mobile) -->
+  <div class="sidebar-footer" *ngIf="!isCollapsed">
+    <div class="create-post-btn">
+      <a [routerLink]="['/content-creation']" class="btn-primary full-width-button" (click)="onNavItemClick()">
+        <i class="fas fa-plus"></i>
+        Create New Post
+      </a>
+    </div>
+  </div>
+  
+  <!-- Footer for collapsed sidebar (desktop only) -->
+  <div class="sidebar-footer-collapsed" *ngIf="isCollapsed">
+    <div class="create-post-btn-collapsed">
+      <a [routerLink]="['/content-creation']" class="btn-icon" (click)="onNavItemClick()" title="Create New Post">
+        <i class="fas fa-plus"></i>
+      </a>
+    </div>
+  </div>
+</aside>

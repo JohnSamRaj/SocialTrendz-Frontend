@@ -1,0 +1,40 @@
+<div class="app-container" [ngClass]="{'auth-app': isAuthPage}">
+  <!-- Only show header when not on auth pages and user is logged in -->
+  <app-header *ngIf="!isAuthPage && authService.isLoggedIn()">
+    <!-- Mobile menu toggle button -->
+    <button class="mobile-menu-toggle" (click)="toggleSidebar()">
+      <i class="fas" [ngClass]="isSidebarOpen ? 'fa-times' : 'fa-bars'"></i>
+    </button>
+  </app-header>
+  
+  <!-- Content wrapper with conditional classes -->
+  <div class="content-wrapper" [ngClass]="{'collapsed-sidebar': isSidebarCollapsed && !isAuthPage, 'auth-content-wrapper': isAuthPage}">
+    <!-- Sidebar component with proper class bindings - hide on auth pages -->
+    <app-sidebar 
+      *ngIf="!isAuthPage && authService.isLoggedIn()" 
+      [ngClass]="{'show': isSidebarOpen, 'collapsed': isSidebarCollapsed}" 
+      (closeMobileSidebar)="closeSidebar()"
+      (sidebarCollapsedChange)="onSidebarCollapsedChange($event)">
+    </app-sidebar>
+    
+    <!-- Sidebar overlay - clicking this will close the sidebar - hide on auth pages -->
+    <div *ngIf="!isAuthPage" class="sidebar-overlay" [ngClass]="{'active': isSidebarOpen}" (click)="closeSidebar()"></div>
+    
+    <!-- Main content area with conditional classes based on auth page status -->
+    <main class="main-content" [ngClass]="{'sidebar-collapsed': isSidebarCollapsed && !isAuthPage, 'auth-main-content': isAuthPage}">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+  
+  <!-- Onboarding Modal -->
+  <app-onboarding-modal 
+    *ngIf="authService.isLoggedIn() && !isAuthPage"
+    [(visible)]="showOnboardingModal"
+    (completed)="onOnboardingCompleted()"
+    (skipped)="onOnboardingSkipped()">
+  </app-onboarding-modal>
+  
+  <!-- Toast Messages -->
+  <app-toast-message></app-toast-message>
+  
+</div>

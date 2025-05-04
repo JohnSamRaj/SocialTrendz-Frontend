@@ -1,0 +1,179 @@
+<div class="profile-container">
+  <div class="profile-header">
+    <h1>My Profile</h1>
+    <p>Manage your personal information and social accounts</p>
+  </div>
+  
+  <!-- Skeleton loading state -->
+  <div class="skeleton-container" *ngIf="isLoading">
+    <div class="profile-content">
+      <div class="profile-sidebar">
+        <div class="profile-image-container">
+          <div class="profile-image">
+            <app-skeleton-loader type="circle" width="150px" height="150px"></app-skeleton-loader>
+          </div>
+          <app-skeleton-loader type="title" width="120px"></app-skeleton-loader>
+          <app-skeleton-loader type="text" width="180px"></app-skeleton-loader>
+        </div>
+        
+        <div class="profile-stats">
+          <div class="stat-item" *ngFor="let i of [1,2,3]">
+            <app-skeleton-loader type="text" width="40px" height="24px"></app-skeleton-loader>
+            <app-skeleton-loader type="text" width="60px" height="16px"></app-skeleton-loader>
+          </div>
+        </div>
+      </div>
+      
+      <div class="profile-form">
+        <app-skeleton-loader type="title" width="200px"></app-skeleton-loader>
+        <div class="form-group" *ngFor="let i of [1,2,3]">
+          <app-skeleton-loader type="text" width="150px" height="18px"></app-skeleton-loader>
+          <app-skeleton-loader type="rect" width="100%" height="48px"></app-skeleton-loader>
+        </div>
+        <app-skeleton-loader type="rect" width="120px" height="40px"></app-skeleton-loader>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Success message -->
+  <div class="success-message" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i> {{ successMessage }}
+  </div>
+  
+  <!-- Error message -->
+  <div class="error-message" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+  </div>
+  
+  <div class="profile-content" *ngIf="!isLoading">
+    <div class="profile-sidebar">
+      <div class="profile-image-container">
+        <div class="profile-image">
+          <img 
+            [src]="user?.profilePicture || 'assets/images/default-avatar.png'" 
+            alt="Profile Picture">
+          <div class="image-overlay">
+            <label for="profile-image-upload" class="upload-button">
+              <i class="fas fa-camera"></i>
+            </label>
+            <input 
+              type="file" 
+              id="profile-image-upload" 
+              accept="image/*" 
+              (change)="onProfileImageSelected($event)"
+              hidden>
+          </div>
+        </div>
+        <h2>{{ user?.fullName }}</h2>
+        <p class="user-email">{{ user?.email }}</p>
+      </div>
+      
+      <div class="profile-stats">
+        <div class="stat-item">
+          <span class="stat-value">128</span>
+          <span class="stat-label">Posts</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">5.2k</span>
+          <span class="stat-label">Followers</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">267</span>
+          <span class="stat-label">Following</span>
+        </div>
+      </div>
+      
+      <div class="account-status">
+        <div class="status-indicator">
+          <span class="dot active"></span>
+          <span>Account Active</span>
+        </div>
+        <div class="member-since">
+          <i class="fas fa-calendar"></i>
+          <span>Member since {{ user?.createdAt | date:'mediumDate' }}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="profile-main">
+      <form [formGroup]="profileForm" (submit)="saveProfile()">
+        <div class="form-section">
+          <h3>Personal Information</h3>
+          
+          <div class="form-group">
+            <label for="fullName">Full Name</label>
+            <input type="text" id="fullName" formControlName="fullName" placeholder="Your full name">
+          </div>
+          
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" formControlName="email" placeholder="Your email address" [disabled]="true">
+            <p class="form-helper">Email cannot be changed. Contact support for assistance.</p>
+          </div>
+          
+          <div class="form-group">
+            <label for="bio">Bio</label>
+            <textarea id="bio" formControlName="bio" placeholder="Tell us about yourself" rows="4"></textarea>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="location">Location</label>
+              <input type="text" id="location" formControlName="location" placeholder="Your location">
+            </div>
+            
+            <div class="form-group">
+              <label for="website">Website</label>
+              <input type="url" id="website" formControlName="website" placeholder="Your website URL">
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-section">
+          <h3>Social Media Accounts</h3>
+          <p class="section-description">Connect your social media accounts to enable cross-posting</p>
+          
+          <div class="form-group">
+            <label for="instagram">
+              <i class="fab fa-instagram"></i> Instagram
+            </label>
+            <div class="input-with-icon">
+              <span class="input-prefix">&#64;</span>
+              <input type="text" id="instagram" formControlName="instagram" placeholder="Your Instagram username">
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="facebook">
+              <i class="fab fa-facebook"></i> Facebook
+            </label>
+            <div class="input-with-icon">
+              <span class="input-prefix">facebook.com/</span>
+              <input type="text" id="facebook" formControlName="facebook" placeholder="Your Facebook username">
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="twitter">
+              <i class="fab fa-twitter"></i> Twitter
+            </label>
+            <div class="input-with-icon">
+              <span class="input-prefix">&#64;</span>
+              <input type="text" id="twitter" formControlName="twitter" placeholder="Your Twitter username">
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="discardChanges()">
+            Discard Changes
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="isSaving || profileForm.invalid">
+            <i class="fas fa-spinner fa-spin" *ngIf="isSaving"></i>
+            Save Profile
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

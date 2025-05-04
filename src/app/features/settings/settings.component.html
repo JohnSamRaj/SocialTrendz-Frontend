@@ -1,0 +1,249 @@
+<div class="settings-container">
+  <div class="settings-header">
+    <h1>Settings</h1>
+    <p>Manage your account settings and preferences</p>
+  </div>
+  
+  <div class="settings-content">
+    <div class="settings-sidebar">
+      <ul class="settings-tabs">
+        <li [class.active]="activeTab === 'profile'" (click)="setActiveTab('profile')">
+          <i class="fas fa-user"></i> Profile Settings
+        </li>
+        <li [class.active]="activeTab === 'notifications'" (click)="setActiveTab('notifications')">
+          <i class="fas fa-bell"></i> Notifications
+        </li>
+        <li [class.active]="activeTab === 'security'" (click)="setActiveTab('security')">
+          <i class="fas fa-lock"></i> Security
+        </li>
+        <li [class.active]="activeTab === 'connectedAccounts'" (click)="setActiveTab('connectedAccounts')">
+          <i class="fas fa-link"></i> Connected Accounts
+        </li>
+      </ul>
+    </div>
+    
+    <div class="settings-main">
+      <!-- Success message -->
+      <div class="success-message" *ngIf="successMessage">
+        <i class="fas fa-check-circle"></i> {{ successMessage }}
+      </div>
+      
+      <!-- Skeleton Loading State -->
+      <div class="skeleton-container" *ngIf="isLoading">
+        <app-skeleton-loader type="title" width="50%" height="32px"></app-skeleton-loader>
+        <div class="form-group-skeleton" *ngFor="let i of [1, 2, 3, 4]">
+          <app-skeleton-loader type="text" width="30%" height="20px"></app-skeleton-loader>
+          <app-skeleton-loader type="rect" width="100%" height="42px"></app-skeleton-loader>
+        </div>
+        <app-skeleton-loader type="rect" width="120px" height="42px"></app-skeleton-loader>
+      </div>
+      
+      <!-- Profile Settings Tab -->
+      <div class="settings-panel" *ngIf="activeTab === 'profile'">
+        <h2>Profile Settings</h2>
+        
+        <form [formGroup]="profileForm" (submit)="saveProfileSettings()">
+          <div class="form-group">
+            <label for="fullName">Full Name</label>
+            <input type="text" id="fullName" formControlName="fullName" placeholder="Enter your full name">
+          </div>
+          
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" formControlName="email" placeholder="Enter your email address">
+          </div>
+          
+          <div class="form-group">
+            <label for="bio">Bio</label>
+            <textarea id="bio" formControlName="bio" placeholder="Tell us about yourself"></textarea>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="location">Location</label>
+              <input type="text" id="location" formControlName="location" placeholder="Your location">
+            </div>
+            
+            <div class="form-group">
+              <label for="website">Website</label>
+              <input type="url" id="website" formControlName="website" placeholder="Your website URL">
+            </div>
+          </div>
+          
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" [disabled]="isLoading">
+              <i class="fas fa-spinner fa-spin" *ngIf="isLoading"></i>
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Notifications Tab -->
+      <div class="settings-panel" *ngIf="activeTab === 'notifications'">
+        <h2>Notification Settings</h2>
+        
+        <form [formGroup]="notificationForm" (submit)="saveNotificationSettings()">
+          <div class="form-switch">
+            <div class="switch-label">
+              <label for="emailNotifications">Email Notifications</label>
+              <p class="form-hint">Receive email notifications for important updates</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="emailNotifications" formControlName="emailNotifications">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          
+          <div class="form-switch">
+            <div class="switch-label">
+              <label for="pushNotifications">Push Notifications</label>
+              <p class="form-hint">Receive notifications on your device</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="pushNotifications" formControlName="pushNotifications">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          
+          <div class="form-switch">
+            <div class="switch-label">
+              <label for="postActivityNotifications">Post Activity</label>
+              <p class="form-hint">Get notified about likes, comments, and shares</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="postActivityNotifications" formControlName="postActivityNotifications">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          
+          <div class="form-switch">
+            <div class="switch-label">
+              <label for="accountNotifications">Account Updates</label>
+              <p class="form-hint">Get notified about changes to your account</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="accountNotifications" formControlName="accountNotifications">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          
+          <div class="form-switch">
+            <div class="switch-label">
+              <label for="marketingEmails">Marketing Emails</label>
+              <p class="form-hint">Receive promotions, tips, and product updates</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="marketingEmails" formControlName="marketingEmails">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" [disabled]="isLoading">
+              <i class="fas fa-spinner fa-spin" *ngIf="isLoading"></i>
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Security Tab -->
+      <div class="settings-panel" *ngIf="activeTab === 'security'">
+        <h2>Security Settings</h2>
+        
+        <form [formGroup]="securityForm" (submit)="saveSecuritySettings()">
+          <div class="form-group">
+            <label for="currentPassword">Current Password</label>
+            <input type="password" id="currentPassword" formControlName="currentPassword" placeholder="Enter your current password">
+          </div>
+          
+          <div class="form-group">
+            <label for="newPassword">New Password</label>
+            <input type="password" id="newPassword" formControlName="newPassword" placeholder="Enter your new password">
+          </div>
+          
+          <div class="form-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <input type="password" id="confirmPassword" formControlName="confirmPassword" placeholder="Confirm your new password">
+          </div>
+          
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" [disabled]="isLoading">
+              <i class="fas fa-spinner fa-spin" *ngIf="isLoading"></i>
+              Update Password
+            </button>
+          </div>
+        </form>
+        
+        <div class="security-additional">
+          <h3>Two-Factor Authentication</h3>
+          <p>Add an extra layer of security to your account</p>
+          <button class="btn-secondary">
+            <i class="fas fa-shield-alt"></i> Setup Two-Factor Authentication
+          </button>
+        </div>
+      </div>
+      
+      <!-- Connected Accounts Tab -->
+      <div class="settings-panel" *ngIf="activeTab === 'connectedAccounts'">
+        <h2>Connected Accounts</h2>
+        <p class="panel-description">Connect your accounts for a seamless experience</p>
+        
+        <div class="connected-accounts-list">
+          <div class="connected-account-item">
+            <div class="account-info">
+              <i class="fab fa-instagram"></i>
+              <div>
+                <h3>Instagram</h3>
+                <p>Connect your Instagram account</p>
+              </div>
+            </div>
+            <button class="btn-outline">
+              <i class="fas fa-link"></i> Connect
+            </button>
+          </div>
+          
+          <div class="connected-account-item">
+            <div class="account-info">
+              <i class="fab fa-facebook"></i>
+              <div>
+                <h3>Facebook</h3>
+                <p>Connect your Facebook account</p>
+              </div>
+            </div>
+            <button class="btn-outline">
+              <i class="fas fa-link"></i> Connect
+            </button>
+          </div>
+          
+          <div class="connected-account-item">
+            <div class="account-info">
+              <i class="fab fa-twitter"></i>
+              <div>
+                <h3>Twitter</h3>
+                <p>Connect your Twitter account</p>
+              </div>
+            </div>
+            <button class="btn-outline">
+              <i class="fas fa-link"></i> Connect
+            </button>
+          </div>
+          
+          <div class="connected-account-item">
+            <div class="account-info">
+              <i class="fab fa-linkedin"></i>
+              <div>
+                <h3>LinkedIn</h3>
+                <p>Connect your LinkedIn account</p>
+              </div>
+            </div>
+            <button class="btn-outline">
+              <i class="fas fa-link"></i> Connect
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

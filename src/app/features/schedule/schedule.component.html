@@ -1,0 +1,224 @@
+<div class="schedule-container">
+  <div class="schedule-header">
+    <div class="title-section">
+      <h1>Content Calendar</h1>
+      <p>Schedule and manage your upcoming Instagram posts</p>
+    </div>
+    
+    <div class="actions">
+      <button class="btn-secondary" (click)="toggleBulkScheduler()">
+        <i class="fas fa-calendar-plus"></i> 
+        {{ showBulkScheduler ? 'Cancel Bulk Scheduling' : 'Bulk Schedule' }}
+      </button>
+      <button class="btn-primary" routerLink="/content-creation">
+        <i class="fas fa-plus"></i> Create New Post
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div class="error-message" *ngIf="error">
+    <i class="fas fa-exclamation-circle"></i>
+    <span>{{ error }}</span>
+    <button class="dismiss-btn" (click)="error = null">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <!-- Skeleton Loading State -->
+  <div class="skeleton-container" *ngIf="isLoading">
+    <!-- Skeleton Calendar Header -->
+    <div class="calendar-header">
+      <div class="month-selector">
+        <app-skeleton-loader type="rect" width="120px" height="40px"></app-skeleton-loader>
+      </div>
+      <div class="view-selector">
+        <app-skeleton-loader type="rect" width="200px" height="40px"></app-skeleton-loader>
+      </div>
+    </div>
+    
+    <!-- Skeleton Calendar Grid -->
+    <div class="calendar-grid">
+      <!-- Weekday Headers -->
+      <div class="weekdays-header">
+        <div class="weekday" *ngFor="let i of [1,2,3,4,5,6,7]">
+          <app-skeleton-loader type="text" width="40px"></app-skeleton-loader>
+        </div>
+      </div>
+      
+      <!-- Calendar Days -->
+      <div class="calendar-days">
+        <div class="day-cell" *ngFor="let i of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]">
+          <div class="day-number">
+            <app-skeleton-loader type="circle" width="32px" height="32px"></app-skeleton-loader>
+          </div>
+          <div class="day-content">
+            <app-skeleton-loader *ngIf="i % 3 === 0" type="rect" width="80%" height="20px"></app-skeleton-loader>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Skeleton Upcoming Posts -->
+    <div class="upcoming-posts-section">
+      <app-skeleton-loader type="title" width="200px"></app-skeleton-loader>
+      <div class="upcoming-posts-list">
+        <app-skeleton-card *ngFor="let i of [1,2,3,4]"></app-skeleton-card>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Scheduler -->
+  <div class="bulk-scheduler" *ngIf="showBulkScheduler && !isLoading">
+    <div class="bulk-header">
+      <h2>Bulk Schedule Posts</h2>
+      <span class="selected-count">{{ getSelectedPostsCount() }} posts selected</span>
+    </div>
+    
+    <div class="bulk-options">
+      <div class="schedule-inputs">
+        <div class="form-group">
+          <label for="bulk-date">Date</label>
+          <input 
+            type="date" 
+            id="bulk-date" 
+            [(ngModel)]="bulkScheduleDate" 
+            [min]="getMinDate()"
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="bulk-time">Time</label>
+          <input 
+            type="time" 
+            id="bulk-time" 
+            [(ngModel)]="bulkScheduleTime"
+          >
+        </div>
+        
+        <button 
+          class="btn-primary schedule-btn" 
+          (click)="scheduleBulkPosts()" 
+          [disabled]="getSelectedPostsCount() === 0"
+        >
+          <i class="fas fa-calendar-check"></i> Schedule Selected Posts
+        </button>
+      </div>
+      
+      <div class="bulk-posts-list">
+        <div 
+          class="bulk-post-item" 
+          *ngFor="let post of getUnpublishedPosts()" 
+          [class.selected]="isPostSelected(post)"
+          (click)="togglePostSelection(post)"
+        >
+          <div class="post-image">
+            <img *ngIf="post.mediaItems && post.mediaItems.length" [src]="post.mediaItems[0].url" alt="Post image">
+            <div *ngIf="!post.mediaItems || post.mediaItems.length === 0" class="no-image">
+              <i class="fas fa-image"></i>
+            </div>
+          </div>
+          <div class="post-info">
+            <h4>{{ post.caption.substring(0, 30) }}{{ post.caption.length > 30 ? '...' : '' }}</h4>
+            <span class="post-status" [class]="post.status">{{ post.status }}</span>
+          </div>
+          <div class="selection-indicator">
+            <i class="fas" [class.fa-square]="!isPostSelected(post)" [class.fa-check-square]="isPostSelected(post)"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendar View -->
+  <div class="calendar-view" *ngIf="!isLoading && !showBulkScheduler">
+    <div class="calendar-grid">
+      <app-calendar 
+        [posts]="posts"
+        (daySelected)="onDaySelected($event)"
+        (postSelected)="onPostSelected($event)"
+      ></app-calendar>
+    </div>
+    
+    <div class="day-details" *ngIf="selectedDate">
+      <div class="day-header">
+        <h2>{{ getFormattedDate(selectedDate) }}</h2>
+        <button class="btn-primary" routerLink="/content-creation">
+          <i class="fas fa-plus"></i> Add Post
+        </button>
+      </div>
+      
+      <div class="day-posts" *ngIf="getPostsForSelectedDate().length > 0">
+        <app-post-card 
+          *ngFor="let post of getPostsForSelectedDate()" 
+          [post]="post"
+          (edit)="handleEdit($event)"
+          (delete)="handleDelete($event)"
+          (publish)="handlePublish($event)"
+          (schedule)="handleSchedule($event)"
+        ></app-post-card>
+      </div>
+      
+      <div class="empty-day" *ngIf="getPostsForSelectedDate().length === 0">
+        <div class="empty-icon">
+          <i class="fas fa-calendar-day"></i>
+        </div>
+        <p>No posts scheduled for this day</p>
+        <button class="btn-secondary" routerLink="/content-creation">Create a Post</button>
+      </div>
+    </div>
+    
+    <div class="post-details" *ngIf="selectedPost">
+      <div class="post-details-header">
+        <h2>Post Details</h2>
+        <button class="close-btn" (click)="selectedPost = null">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="post-preview">
+        <div class="post-media">
+          <img *ngIf="selectedPost.mediaItems && selectedPost.mediaItems.length" [src]="selectedPost.mediaItems[0].url" alt="Post media">
+          <div *ngIf="!selectedPost.mediaItems || selectedPost.mediaItems.length === 0" class="no-image">
+            <i class="fas fa-image"></i>
+          </div>
+        </div>
+        
+        <div class="post-info-details">
+          <div class="post-status-badge" [class]="selectedPost.status">
+            {{ selectedPost.status }}
+          </div>
+          
+          <div class="post-schedule-time" *ngIf="selectedPost.scheduledFor">
+            <i class="fas fa-clock"></i>
+            <span>Scheduled for: {{ selectedPost.scheduledFor | date:'medium' }}</span>
+          </div>
+          
+          <div class="post-caption">
+            <h3>Caption</h3>
+            <p>{{ selectedPost.caption }}</p>
+          </div>
+          
+          <div class="post-hashtags" *ngIf="selectedPost.hashtags && selectedPost.hashtags.length > 0">
+            <h3>Hashtags</h3>
+            <div class="hashtags-list">
+              <span class="hashtag" *ngFor="let tag of selectedPost.hashtags">#{{ tag }}</span>
+            </div>
+          </div>
+          
+          <div class="post-actions">
+            <button class="btn-outline" (click)="handleEdit(selectedPost)">
+              <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="btn-primary" *ngIf="selectedPost.status !== 'published'" (click)="handlePublish(selectedPost)">
+              <i class="fas fa-paper-plane"></i> Publish Now
+            </button>
+            <button class="btn-outline delete-btn" (click)="handleDelete(selectedPost)">
+              <i class="fas fa-trash"></i> Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

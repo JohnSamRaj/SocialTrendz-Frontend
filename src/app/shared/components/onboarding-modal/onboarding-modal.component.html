@@ -1,0 +1,83 @@
+<div class="modal-backdrop" [class.active]="isVisible">
+  <div class="onboarding-modal" [class.active]="isVisible">
+    <button class="exit-button" aria-label="Close onboarding" (click)="skipAll()">
+      <i class="fas fa-times"></i>
+    </button>
+    <!-- Intro screen -->
+    <div *ngIf="showIntro" class="onboarding-intro">
+      <h2>Welcome to SocialTrendz!</h2>
+      <p>Let's personalize your experience with a few quick questions.</p>
+      <p class="info-text">This helps us tailor our recommendations to your specific needs.</p>
+      
+      <div class="action-buttons">
+        <button type="button" class="btn-primary" (click)="startQuestionnaire()">Get Started</button>
+        <button type="button" class="btn-secondary" (click)="skipAll()">Skip for now</button>
+      </div>
+    </div>
+    
+    <!-- Questionnaire -->
+    <div *ngIf="!showIntro && !showOutro" class="questionnaire">
+      <div class="progress-bar">
+        <div class="progress" [style.width.%]="progress"></div>
+      </div>
+      
+      <div class="question-counter">
+        Question {{ currentQuestionIndex + 1 }} of {{ totalQuestions }}
+        <span *ngIf="!currentQuestion.required" class="optional-badge">Optional</span>
+      </div>
+      
+      <div class="question-content">
+        <h3>{{ currentQuestion.question }}</h3>
+        
+        <form [formGroup]="currentForm">
+          <!-- MCQ Question -->
+          <div *ngIf="currentQuestion.type === 'mcq'" class="mcq-options">
+            <div *ngFor="let option of currentQuestion.options" 
+                 class="option" 
+                 (click)="selectOption(option)">
+              <input 
+                type="radio" 
+                [id]="'option-' + option" 
+                formControlName="answer"
+                [value]="option"
+              >
+              <label [for]="'option-' + option">{{ option }}</label>
+            </div>
+          </div>
+          
+          <!-- Open-ended Question -->
+          <div *ngIf="currentQuestion.type === 'open-ended'" class="open-ended">
+            <textarea 
+              formControlName="answer" 
+              rows="4" 
+              placeholder="Type your answer here..."
+            ></textarea>
+            
+            <div *ngIf="currentForm.get('answer')?.invalid && currentForm.get('answer')?.touched" class="error-message">
+              Please provide an answer to continue.
+            </div>
+          </div>
+        </form>
+      </div>
+      
+      <div class="action-buttons">
+        <button type="button" class="btn-secondary" (click)="previousQuestion()">Back</button>
+        <button type="button" class="btn-secondary" (click)="skipQuestion()">Skip</button>
+        <button type="button" class="btn-primary" (click)="nextQuestion()">
+          {{ currentQuestionIndex < totalQuestions - 1 ? 'Next' : 'Finish' }}
+        </button>
+      </div>
+    </div>
+    
+    <!-- Outro screen -->
+    <div *ngIf="showOutro" class="onboarding-outro">
+      <h2>Thank You!</h2>
+      <p>We've collected all the information we need to get you started.</p>
+      <p class="info-text">Your personalized dashboard is ready!</p>
+      
+      <div class="action-buttons">
+        <button type="button" class="btn-primary" (click)="finishOnboarding()">Go to Dashboard</button>
+      </div>
+    </div>
+  </div>
+</div>

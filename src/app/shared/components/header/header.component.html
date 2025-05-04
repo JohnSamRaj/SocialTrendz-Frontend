@@ -1,0 +1,59 @@
+<header class="header">
+  <!-- Mobile menu button from parent component will be projected here -->
+  <div class="header-mobile-menu">
+    <ng-content></ng-content>
+  </div>
+  
+  <div class="header-logo">
+    <a routerLink="/dashboard">
+      <h1>Social<span>Trendz</span></h1>
+    </a>
+  </div>
+  
+  <div class="header-search">
+    <div class="search-input">
+      <i class="fas fa-search"></i>
+      <input type="text" placeholder="Search...">
+    </div>
+  </div>
+  
+  <div class="header-actions">
+    <button class="btn-icon" title="Notifications">
+      <i class="fas fa-bell"></i>
+    </button>
+    
+    <button class="btn-icon" title="Help" routerLink="/help">
+      <i class="fas fa-question-circle"></i>
+    </button>
+    
+    <div class="user-menu" *ngIf="user" [class.active]="isProfileMenuOpen">
+      <div class="user-avatar" (click)="toggleProfileMenu($event)">
+        <img *ngIf="user.profilePicture" [src]="user.profilePicture" alt="Profile Picture">
+        <div *ngIf="!user.profilePicture" class="avatar-placeholder">
+          {{ user.fullName[0] }}
+        </div>
+      </div>
+      
+      <div class="user-dropdown" [class.show]="isProfileMenuOpen">
+        <div class="user-info">
+          <p class="user-name">{{ user.fullName }}</p>
+          <p class="user-email">{{ user.email }}</p>
+        </div>
+        
+        <div class="dropdown-divider"></div>
+        
+        <div class="dropdown-links">
+          <a routerLink="/profile">
+            <i class="fas fa-user"></i> Profile
+          </a>
+          <a routerLink="/settings">
+            <i class="fas fa-cog"></i> Settings
+          </a>
+          <a (click)="logout()" class="logout-link">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
