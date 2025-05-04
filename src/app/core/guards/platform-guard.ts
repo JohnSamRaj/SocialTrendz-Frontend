@@ -4,6 +4,11 @@ import { map, catchError, of } from 'rxjs';
 import { PlatformConnectionService } from '../services/platform-connection.service';
 import { AuthService } from '../auth/auth.service';
 
+/**
+ * Guard that checks if the user has connected at least one platform
+ * If not, redirects them to the accounts-connect page
+ * This ensures users can't access platform-specific features without connecting a platform
+ */
 export const platformGuard: CanActivateFn = (route, state) => {
   const platformConnectionService = inject(PlatformConnectionService);
   const authService = inject(AuthService);
@@ -12,6 +17,14 @@ export const platformGuard: CanActivateFn = (route, state) => {
   // First, check if the user is authenticated
   if (!authService.isLoggedIn()) {
     router.navigate(['/auth']);
+    return false;
+  }
+
+  // Then check if the user has completed onboarding
+  const currentUser = authService.getCurrentUser();
+  if (currentUser && !currentUser.hasCompletedOnboarding) {
+    console.log('User has not completed onboarding, redirecting to dashboard');
+    router.navigate(['/dashboard']); // Onboarding modal will appear here
     return false;
   }
 
@@ -29,20 +42,27 @@ export const platformGuard: CanActivateFn = (route, state) => {
         } else {
           // Redirect to accounts connect page if no platforms are connected
           console.log('No connected platforms found, redirecting to accounts connect page');
-          router.navigate(['/accounts-connect']);
+          // Don't redirect if already on accounts-connect page
+          if (!state.url.includes('/accounts-connect')) {
+            router.navigate(['/accounts-connect']);
+          }
           return false;
         }
       }),
       catchError(error => {
         // In case of error, log it and redirect to accounts connect page
         console.error('Error in platform guard:', error);
-        router.navigate(['/accounts-connect']);
+        if (!state.url.includes('/accounts-connect')) {
+          router.navigate(['/accounts-connect']);
+        }
         return of(false);
       })
     );
   } catch (error) {
     console.error('Critical error in platform guard:', error);
-    router.navigate(['/accounts-connect']);
+    if (!state.url.includes('/accounts-connect')) {
+      router.navigate(['/accounts-connect']);
+    }
     return false;
   }
 };

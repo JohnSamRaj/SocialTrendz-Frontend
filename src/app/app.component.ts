@@ -130,6 +130,7 @@ export class AppComponent implements OnInit {
   
   /**
    * Handler for onboarding completed event
+   * Redirects to accounts-connect page after onboarding is completed
    */
   onOnboardingCompleted(): void {
     this.showOnboardingModal = false;
@@ -138,6 +139,14 @@ export class AppComponent implements OnInit {
     if (currentUser) {
       currentUser.hasCompletedOnboarding = true;
       this.authService.updateCurrentUser(currentUser);
+      
+      // For both new and existing users, redirect to accounts-connect
+      // page if they don't have any connected platforms
+      if (!currentUser.connectedPlatforms || currentUser.connectedPlatforms.length === 0) {
+        setTimeout(() => {
+          this.router.navigate(['/accounts-connect']);
+        }, 300);
+      }
     }
   }
   
