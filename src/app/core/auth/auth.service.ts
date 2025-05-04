@@ -5,7 +5,7 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
-import { catchError, tap, map, delay } from 'rxjs/operators';
+import { catchError, tap, map, delay, shareReplay, finalize } from 'rxjs/operators';
 import { User, AuthCredentials, RegisterCredentials, AuthProvider } from '../models/user.model';
 import { DataService } from '../services/data.service';
 import { ToastService } from '../../shared/services/toast.service';
@@ -21,6 +21,10 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
   
+  // Tracking state for optimization
+  private authRequestInProgress = false;
+  private sessionRequest$: Observable<User> | null = null;
+  
   constructor(
     private router: Router,
     private dataService: DataService,
@@ -32,18 +36,42 @@ export class AuthService {
   }
 
   /**
-   * Initialize user data from storage or service
+   * Initialize user data from storage or service with optimized loading
    */
   private initUserData(): void {
-    // Subscribe to user data from data service
+    // Try to load from local state first (fastest)
+    const cachedUser = this.tryLoadFromLocalStorage();
+    if (cachedUser) {
+      this.currentUserSubject.next(cachedUser);
+    }
+    
+    // Subscribe to user data from data service as backup and to keep in sync
     this.dataService.currentUser$.subscribe(user => {
       if (user) {
         this.currentUserSubject.next(user);
+        // Update localStorage with latest data
+        this.storeUserData(user);
       }
     });
     
     // Try to restore session
     this.dataService.tryRestoreSession();
+  }
+  
+  /**
+   * Try to load user data from localStorage for faster initial load
+   */
+  private tryLoadFromLocalStorage(): User | null {
+    try {
+      const userJson = localStorage.getItem('currentUser');
+      if (userJson) {
+        return JSON.parse(userJson) as User;
+      }
+    } catch (e) {
+      console.error('Failed to parse user data from localStorage', e);
+      localStorage.removeItem('currentUser');
+    }
+    return null;
   }
 
   /**
@@ -267,8 +295,26 @@ export class AuthService {
    * @param redirectToLogin Whether to redirect to login page
    */
   completeAuthentication(user: User, redirectToLogin: boolean = false): void {
-    const route = redirectToLogin ? '/auth' : '/dashboard';
-    this.router.navigate([route]);
+    if (redirectToLogin) {
+      this.router.navigate(['/auth']);
+      return;
+    }
+    
+    // Check if user needs to complete onboarding first
+    if (!user.hasCompletedOnboarding) {
+      this.router.navigate(['/dashboard']); // Onboarding modal will appear here
+      return;
+    }
+    
+    // If user has completed onboarding but has no connected platforms,
+    // redirect to accounts connect page
+    if (!user.connectedPlatforms || user.connectedPlatforms.length === 0) {
+      this.router.navigate(['/accounts-connect']);
+      return;
+    }
+    
+    // Otherwise, go to dashboard
+    this.router.navigate(['/dashboard']);
   }
 
   /**
@@ -321,6 +367,15 @@ export class AuthService {
     };
     
     this.updateCurrentUser(updatedUser);
+    
+    // If onboarding is marked as completed, and the user doesn't have any connected platforms,
+    // redirect to the accounts-connect page after a slight delay
+    if (completed && (!updatedUser.connectedPlatforms || updatedUser.connectedPlatforms.length === 0)) {
+      setTimeout(() => {
+        this.router.navigate(['/accounts-connect']);
+      }, 300);
+    }
+    
     return of(updatedUser);
   }
 

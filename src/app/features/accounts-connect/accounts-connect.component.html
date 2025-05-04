@@ -1,0 +1,110 @@
+<div class="accounts-connect-container">
+  <header class="page-header">
+    <button class="back-button" (click)="goBack()">
+      <span>←</span> Back
+    </button>
+    <h1 class="page-title">Connect Your Social Accounts</h1>
+    <p class="page-subtitle">
+      Connect your social media accounts to automate posting and track analytics in one place.
+    </p>
+  </header>
+
+  <!-- Loading state -->
+  <div class="loading-container" *ngIf="loading">
+    <div class="loading-spinner"></div>
+    <p>Loading platforms...</p>
+  </div>
+
+  <!-- Error state -->
+  <div class="error-container" *ngIf="error">
+    <p class="error-message">{{ error }}</p>
+    <button class="retry-button" (click)="loadAvailablePlatforms()">Try Again</button>
+  </div>
+
+  <!-- Platform selection -->
+  <div class="platforms-container" *ngIf="!loading && !error && !selectedPlatform">
+    <h2 class="section-title">Available Platforms</h2>
+    <p class="section-description">
+      Select a platform to connect to your SocialTrendz account.
+    </p>
+
+    <div class="platforms-grid">
+      <div *ngFor="let platform of availablePlatforms" 
+           class="platform-card" 
+           [class.platform-card-disabled]="!platform.available"
+           [class.platform-card-connected]="platform.connectedAccounts && platform.connectedAccounts.length > 0"
+           (click)="selectPlatform(platform)">
+        <div class="platform-icon">
+          <img [src]="platform.icon" [alt]="platform.name + ' icon'">
+        </div>
+        <div class="platform-info">
+          <h3 class="platform-name">{{ platform.name }}</h3>
+          <p class="platform-description">{{ platform.description }}</p>
+          <div class="platform-status" *ngIf="platform.connectedAccounts && platform.connectedAccounts.length > 0">
+            <span class="connected-indicator">Connected</span>
+          </div>
+          <div class="platform-status" *ngIf="!platform.available">
+            <span class="coming-soon-indicator">Coming Soon</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Platform connection details -->
+  <div class="platform-details-container" *ngIf="!loading && selectedPlatform">
+    <div class="platform-header">
+      <img [src]="selectedPlatform.icon" [alt]="selectedPlatform.name + ' icon'" class="platform-details-icon">
+      <h2 class="platform-details-title">Connect to {{ selectedPlatform.name }}</h2>
+    </div>
+
+    <!-- Instagram specific requirements -->
+    <div class="platform-requirements" *ngIf="selectedPlatform.id === 'instagram'">
+      <h3>Requirements for Instagram Connection</h3>
+      <ul class="requirements-list">
+        <li>Your Instagram account must be a Professional account (Business or Creator)</li>
+        <li>Your Instagram account must be connected to a Facebook Page</li>
+        <li>You must have admin access to the Facebook Page connected to your Instagram account</li>
+      </ul>
+
+      <div class="platform-steps">
+        <h3>How to Connect</h3>
+        <ol class="steps-list">
+          <li>Click the "Connect Instagram" button below</li>
+          <li>Log in to your Facebook account if prompted</li>
+          <li>Select the Facebook Page connected to your Instagram account</li>
+          <li>Grant the required permissions for SocialTrendz to access your Instagram data</li>
+          <li>You'll be redirected back to SocialTrendz once the connection is complete</li>
+        </ol>
+      </div>
+
+      <div class="terms-agreement">
+        <p>
+          By connecting your Instagram account, you agree to allow SocialTrendz to:
+        </p>
+        <ul>
+          <li>Access your basic profile information</li>
+          <li>View and analyze your post metrics and audience insights</li>
+          <li>Create and schedule posts on your behalf (when requested)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Facebook specific requirements (for future implementation) -->
+    <div class="platform-requirements" *ngIf="selectedPlatform.id === 'facebook'">
+      <h3>Requirements for Facebook Connection</h3>
+      <p>Facebook integration is coming soon!</p>
+    </div>
+
+    <div class="platform-actions">
+      <button class="back-button secondary" (click)="selectedPlatform = null">
+        Go Back
+      </button>
+      <button class="connect-button primary" 
+              [disabled]="!selectedPlatform.available"
+              (click)="connectPlatform()">
+        Connect {{ selectedPlatform.name }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
+import { platformGuard } from './core/guards/platform-guard';
 
 export const routes: Routes = [
   // Authentication Routes
@@ -40,12 +41,12 @@ export const routes: Routes = [
   {
     path: 'analytics',
     loadComponent: () => import('./features/analytics/analytics.component').then(m => m.AnalyticsComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, platformGuard]
   },
   {
     path: 'schedule',
     loadComponent: () => import('./features/schedule/schedule.component').then(m => m.ScheduleComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, platformGuard]
   },
   {
     path: 'notifications',
@@ -62,7 +63,17 @@ export const routes: Routes = [
     loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent),
     canActivate: [authGuard]
   },
-  // Instagram connect routes removed
+  // Accounts Connect Route
+  {
+    path: 'accounts-connect',
+    loadComponent: () => import('./features/accounts-connect/accounts-connect.component').then(m => m.AccountsConnectComponent),
+    canActivate: [authGuard]
+  },
+  // Instagram Auth Callback
+  {
+    path: 'auth/instagram-callback',
+    loadComponent: () => import('./features/auth/callback/callback.component').then(m => m.CallbackComponent)
+  },
   {
     path: 'help',
     loadComponent: () => import('./features/help/help.component').then(m => m.HelpComponent),
