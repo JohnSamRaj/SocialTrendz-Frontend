@@ -32,6 +32,7 @@ export class ScheduleComponent implements OnInit {
   
   isLoading = true;
   error: string | null = null;
+  noPlatformsConnected = false;
   
   // Bulk scheduling
   showBulkScheduler = false;
@@ -65,17 +66,35 @@ export class ScheduleComponent implements OnInit {
   loadPosts(): void {
     this.isLoading = true;
     this.error = null;
-    
-    this.instagramService.getPosts().subscribe({
-      next: (posts) => {
-        this.posts = posts;
-        this.scheduledPosts = posts.filter(post => post.status === PostStatus.SCHEDULED);
-        this.isLoading = false;
+    this.noPlatformsConnected = false;
+
+    // First check if the user has connected platforms
+    this.instagramService.getConnectedAccounts().subscribe({
+      next: (accounts) => {
+        if (!accounts || accounts.length === 0) {
+          // No connected platforms
+          this.noPlatformsConnected = true;
+          this.isLoading = false;
+        } else {
+          // User has connected platforms, load posts
+          this.instagramService.getPosts().subscribe({
+            next: (posts) => {
+              this.posts = posts;
+              this.scheduledPosts = posts.filter(post => post.status === PostStatus.SCHEDULED);
+              this.isLoading = false;
+            },
+            error: (err) => {
+              this.error = 'Failed to load posts';
+              this.isLoading = false;
+              console.error('Error loading posts:', err);
+            }
+          });
+        }
       },
       error: (err) => {
-        this.error = 'Failed to load posts';
+        this.error = 'Failed to check connected accounts';
         this.isLoading = false;
-        console.error('Error loading posts:', err);
+        console.error('Error checking connected accounts:', err);
       }
     });
   }

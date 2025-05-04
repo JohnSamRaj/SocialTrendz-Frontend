@@ -30,6 +30,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   analytics: AnalyticsOverview | null = null;
   topPerformingPosts: Post[] = [];
   selectedTimeframe: string = '30days';
+  noPlatformsConnected = false;
 
   // Helper methods for template
   getBestPostingHour(): string {
@@ -87,17 +88,35 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
   loadAnalytics(): void {
     this.isLoading = true;
     this.error = null;
+    this.noPlatformsConnected = false;
 
-    this.instagramService.getInstagramInsights().subscribe({
-      next: (data) => {
-        this.analytics = data;
-        this.prepareChartData();
-        this.isLoading = false;
+    // First check if the user has connected platforms
+    this.instagramService.getConnectedAccounts().subscribe({
+      next: (accounts) => {
+        if (!accounts || accounts.length === 0) {
+          // No connected platforms
+          this.noPlatformsConnected = true;
+          this.isLoading = false;
+        } else {
+          // User has connected platforms, load analytics data
+          this.instagramService.getInstagramInsights().subscribe({
+            next: (data) => {
+              this.analytics = data;
+              this.prepareChartData();
+              this.isLoading = false;
+            },
+            error: (err) => {
+              this.error = 'Failed to load analytics data';
+              this.isLoading = false;
+              console.error('Error loading analytics:', err);
+            }
+          });
+        }
       },
       error: (err) => {
-        this.error = 'Failed to load analytics data';
+        this.error = 'Failed to check connected accounts';
         this.isLoading = false;
-        console.error('Error loading analytics:', err);
+        console.error('Error checking connected accounts:', err);
       }
     });
 

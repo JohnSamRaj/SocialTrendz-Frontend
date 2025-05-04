@@ -41,12 +41,12 @@ export const routes: Routes = [
   {
     path: 'analytics',
     loadComponent: () => import('./features/analytics/analytics.component').then(m => m.AnalyticsComponent),
-    canActivate: [authGuard, platformGuard]
+    canActivate: [authGuard]
   },
   {
     path: 'schedule',
     loadComponent: () => import('./features/schedule/schedule.component').then(m => m.ScheduleComponent),
-    canActivate: [authGuard, platformGuard]
+    canActivate: [authGuard]
   },
   {
     path: 'notifications',

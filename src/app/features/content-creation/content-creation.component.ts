@@ -207,15 +207,33 @@ export class ContentCreationComponent implements OnInit {
   onAllPlatformsSelectionChange(event: Event): void {
     const isChecked = (event.target as HTMLInputElement).checked;
     
-    // Apply the same checked state to all available platforms
-    Object.keys(this.selectedPlatforms).forEach(platform => {
-      this.selectedPlatforms[platform] = isChecked;
-    });
+    // Check if any platforms are available
+    if (this.availablePlatforms.length === 0) {
+      console.warn('No platforms available to select');
+      return;
+    }
+    
+    // If no platforms exist in the selected platforms object, add all available platforms
+    if (Object.keys(this.selectedPlatforms).length === 0) {
+      this.availablePlatforms.forEach(platform => {
+        this.selectedPlatforms[platform.id] = isChecked;
+      });
+    } else {
+      // Apply the same checked state to all available platforms
+      Object.keys(this.selectedPlatforms).forEach(platform => {
+        this.selectedPlatforms[platform] = isChecked;
+      });
+    }
     
     // If checked, set the platform to the first available one
     if (isChecked && this.availablePlatforms.length > 0) {
       this.newPost.platform = this.availablePlatforms[0].id as any;
     }
+    
+    // Close the dropdown after selection
+    setTimeout(() => {
+      this.isPlatformDropdownOpen = false;
+    }, 300);
     
     this.cdr.markForCheck();
   }

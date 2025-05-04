@@ -69,7 +69,7 @@
   </div>
 
   <!-- Bulk Scheduler -->
-  <div class="bulk-scheduler" *ngIf="showBulkScheduler && !isLoading">
+  <div class="bulk-scheduler" *ngIf="showBulkScheduler && !isLoading && !noPlatformsConnected">
     <div class="bulk-header">
       <h2>Bulk Schedule Posts</h2>
       <span class="selected-count">{{ getSelectedPostsCount() }} posts selected</span>
@@ -130,8 +130,18 @@
     </div>
   </div>
 
+  <!-- No Connected Platforms State -->
+  <div class="error-container" *ngIf="noPlatformsConnected && !isLoading">
+    <div class="error-icon">
+      <i class="fas fa-link-slash"></i>
+    </div>
+    <h3>No Connected Platforms</h3>
+    <p>Connect at least one social media platform to schedule posts.</p>
+    <button class="btn-primary" routerLink="/accounts-connect">Connect Platform</button>
+  </div>
+
   <!-- Calendar View -->
-  <div class="calendar-view" *ngIf="!isLoading && !showBulkScheduler">
+  <div class="calendar-view" *ngIf="!isLoading && !showBulkScheduler && !noPlatformsConnected">
     <div class="calendar-grid">
       <app-calendar 
         [posts]="posts"

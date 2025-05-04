@@ -73,6 +73,17 @@
   margin-bottom: var(--spacing-lg);
 }
 
+/* Specific styles for no-platforms error */
+.error-container h3 {
+  margin-bottom: 10px;
+  font-size: 1.4rem;
+  color: var(--color-text-dark);
+}
+
+.error-container .fa-link-slash {
+  color: var(--color-secondary);
+}
+
 /* Overview Stats */
 .overview-stats {
   display: grid;

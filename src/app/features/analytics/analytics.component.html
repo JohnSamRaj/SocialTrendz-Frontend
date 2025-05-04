@@ -71,6 +71,16 @@
     <p>{{ error }}</p>
     <button class="btn-secondary" (click)="loadAnalytics()">Try Again</button>
   </div>
+  
+  <!-- No Connected Platforms State -->
+  <div class="error-container" *ngIf="noPlatformsConnected && !isLoading && !error">
+    <div class="error-icon">
+      <i class="fas fa-link-slash"></i>
+    </div>
+    <h3>No Connected Platforms</h3>
+    <p>Connect at least one social media platform to view analytics.</p>
+    <button class="btn-primary" routerLink="/accounts-connect">Connect Platform</button>
+  </div>
 
   <!-- Analytics Content -->
   <div class="analytics-content" *ngIf="!isLoading && !error && analytics">
