@@ -26,6 +26,32 @@ export class SidebarComponent implements OnInit, OnDestroy {
   connectedAccounts: ConnectedAccount[] = [];
   private subscription = new Subscription();
   
+  // Common tablet dimensions to check for
+  private tabletDimensions = [
+    { width: 768, height: 1024 }, // iPad
+    { width: 820, height: 1180 }, // iPad Air
+    { width: 834, height: 1194 }, // iPad Pro 11"
+    { width: 810, height: 1080 }  // Some Android tablets
+  ];
+  
+  /**
+   * Check if the current device is an iPad or similar tablet
+   * based on screen dimensions
+   */
+  private isTabletDevice(): boolean {
+    return this.tabletDimensions.some(
+      dim => (window.innerWidth === dim.width && window.innerHeight === dim.height) ||
+             (window.innerHeight === dim.width && window.innerWidth === dim.height) // handle orientation
+    );
+  }
+  
+  /**
+   * Check if the current device is mobile or tablet size
+   */
+  private isMobileOrTabletSize(): boolean {
+    return window.innerWidth <= 1024 || this.isTabletDevice();
+  }
+  
   get platformDisplayName(): string {
     if (this.selectedPlatform === 'all') {
       return 'All Platforms';
@@ -85,10 +111,10 @@ export class SidebarComponent implements OnInit, OnDestroy {
     });
   }
   
-  // Close mobile sidebar when clicking a navigation item
+  // Close mobile/tablet sidebar when clicking a navigation item
   onNavItemClick(): void {
-    // Check if we're on mobile view by window width
-    if (window.innerWidth <= 768) {
+    // Check if we're on mobile/tablet view
+    if (this.isMobileOrTabletSize()) {
       this.closeMobileSidebar.emit();
     }
   }
@@ -107,7 +133,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
   
   // Toggle platform selection dropdown
   togglePlatformDropdown(): void {
-    if (!this.isCollapsed) {
+    // Allow toggling the dropdown in mobile and tablet views regardless of sidebar collapse state
+    // For desktop (>1024px), only toggle if sidebar is not collapsed
+    if (this.isMobileOrTabletSize() || !this.isCollapsed) {
       this.showPlatformDropdown = !this.showPlatformDropdown;
     }
   }
@@ -147,11 +175,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
       }
     }
     
-    // Handle sidebar closing on mobile when clicking outside
+    // Handle sidebar closing on mobile and tablet when clicking outside
     const sidebar = document.querySelector('.sidebar');
     const mobileToggle = document.querySelector('.mobile-menu-toggle');
     
-    if (sidebar && window.innerWidth <= 768) {
+    if (sidebar && this.isMobileOrTabletSize()) {
       const clickedInsideSidebar = sidebar.contains(event.target as Node);
       const clickedToggle = mobileToggle ? mobileToggle.contains(event.target as Node) : false;
       

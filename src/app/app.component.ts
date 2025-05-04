@@ -73,12 +73,28 @@ export class AppComponent implements OnInit {
     if (this.isSidebarOpen) {
       document.body.classList.add('no-scroll');
       
-      // For mobile devices, ensure the sidebar is visible with a slight delay
-      if (window.innerWidth <= 768) {
+      // For mobile and tablet devices, ensure the sidebar is visible with a slight delay
+      // Increased the width check to capture tablets as well (1024px)
+      if (window.innerWidth <= 1024) {
         setTimeout(() => {
           const sidebarEl = document.querySelector('.sidebar');
           if (sidebarEl) {
             sidebarEl.classList.add('show');
+            
+            // For tablets and mobiles, make sure sidebar elements aren't collapsed
+            if (window.innerWidth <= 768) {
+              // Ensure dropdown arrows are visible in mobile view
+              const dropdownArrows = sidebarEl.querySelectorAll('.dropdown-arrow');
+              dropdownArrows.forEach(arrow => {
+                arrow.classList.remove('desktop-collapsed');
+              });
+              
+              // Ensure platform name is visible in mobile view
+              const platformNames = sidebarEl.querySelectorAll('.platform-name');
+              platformNames.forEach(name => {
+                name.classList.remove('desktop-collapsed');
+              });
+            }
           }
           
           // Ensure the overlay is also properly shown
@@ -95,7 +111,7 @@ export class AppComponent implements OnInit {
   }
   
   /**
-   * Closes the sidebar on mobile
+   * Closes the sidebar on mobile and tablet views
    */
   closeSidebar(): void {
     this.isSidebarOpen = false;
@@ -105,6 +121,12 @@ export class AppComponent implements OnInit {
     const sidebarEl = document.querySelector('.sidebar');
     if (sidebarEl) {
       sidebarEl.classList.remove('show');
+      
+      // Reset any platform dropdown state
+      const platformDropdown = sidebarEl.querySelector('.platform-dropdown');
+      if (platformDropdown) {
+        platformDropdown.classList.remove('show');
+      }
     }
     
     // Make sure the overlay is properly hidden

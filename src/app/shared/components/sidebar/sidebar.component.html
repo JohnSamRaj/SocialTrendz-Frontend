@@ -4,7 +4,9 @@
       <i class="fab fa-instagram" *ngIf="selectedPlatform === 'instagram'"></i>
       <i class="fas fa-th-large" *ngIf="selectedPlatform === 'all'"></i>
       <span class="platform-name" [class.desktop-collapsed]="isCollapsed">{{ platformDisplayName }}</span>
-      <i class="fas fa-chevron-down dropdown-arrow" [class.desktop-collapsed]="isCollapsed" [class.rotated]="showPlatformDropdown"></i>
+      <i class="fas fa-chevron-down dropdown-arrow" 
+         [class.desktop-collapsed]="isCollapsed" 
+         [class.rotated]="showPlatformDropdown"></i>
     </div>
     
     <!-- Desktop and tablet collapse button, always visible -->

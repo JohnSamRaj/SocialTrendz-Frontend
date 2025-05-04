@@ -126,6 +126,17 @@
   margin-bottom: 10px;
 }
 
+/* Ensure the dropdown is always visible in collapsed state on mobile */
+@media (max-width: 768px) {
+  .sidebar.collapsed .platform-dropdown.show {
+    max-height: 150px;
+    opacity: 1;
+    visibility: visible;
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+}
+
 .dropdown-option {
   display: flex;
   align-items: center;
@@ -448,10 +459,27 @@
     right: 50px;
   }
   
-  /* Ensure dropdown appears correctly */
+  /* Make sure dropdown arrow is always visible in collapsed state */
+  .sidebar.collapsed .dropdown-arrow {
+    display: inline-block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: absolute;
+    right: 50px;
+  }
+  
+  /* Ensure platform dropdown appears correctly */
   .platform-dropdown {
     width: 100%;
     margin-top: 0;
+  }
+  
+  /* Ensure platform dropdown shows in collapsed state */
+  .sidebar.collapsed .platform-dropdown.show {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    max-height: 150px !important;
   }
   
   /* Create post button adjustments */
@@ -499,7 +527,10 @@
 }
 
 /* iPad specific fixes for 768x1024 resolution */
-@media (width: 768px) and (height: 1024px) {
+@media (width: 768px) and (height: 1024px), 
+       (width: 820px) and (height: 1180px), 
+       (width: 834px) and (height: 1194px),
+       (width: 810px) and (height: 1080px) {
   /* On iPad, treat this like mobile view */
   .sidebar {
     position: fixed !important;
@@ -580,6 +611,16 @@
     visibility: visible !important;
   }
   
+  /* Make sure platform dropdown behaves correctly */
+  .platform-dropdown.show {
+    max-height: none !important;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    margin-top: 10px !important;
+    margin-bottom: 10px !important;
+  }
+  
   /* Mobile-style search display */
   .mobile-search {
     display: block !important;
@@ -649,6 +690,14 @@
     display: inline-block !important;
     visibility: visible !important;
     opacity: 1 !important;
+  }
+  
+  /* Ensure dropdown arrow is always visible in mobile */
+  .sidebar.collapsed .dropdown-arrow {
+    display: inline-block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    margin-left: auto !important;
   }
   
   .sidebar-header {
@@ -722,6 +771,16 @@
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    margin-top: 10px !important;
+    margin-bottom: 10px !important;
+  }
+  
+  /* Make sure dropdown works in both collapsed and expanded states */
+  .sidebar.collapsed .platform-dropdown.show {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    max-height: none !important;
   }
   
   .sidebar-footer {

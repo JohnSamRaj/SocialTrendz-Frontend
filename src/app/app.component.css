@@ -104,6 +104,77 @@ body.no-scroll {
 }
 
 /* Media queries for responsive design */
+
+/* Tablet view (iPad, iPad Pro, etc.) - Up to 1024px width */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .mobile-menu-toggle {
+    display: flex;
+  }
+  
+  .main-content {
+    width: 100% !important;
+    margin-left: 0 !important;
+    padding: var(--spacing-md) !important;
+    padding-top: calc(60px + var(--spacing-md)) !important;
+  }
+  
+  .sidebar-overlay {
+    display: block;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 99;
+  }
+  
+  .sidebar-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  
+  .content-wrapper.collapsed-sidebar .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+  
+  /* Ensure sidebar toggles properly on tablet */
+  .sidebar.show {
+    transform: translateX(0) !important;
+  }
+  
+  .sidebar:not(.show) {
+    transform: translateX(-100%) !important;
+  }
+}
+
+/* iPad-specific media queries */
+@media (width: 768px) and (height: 1024px),
+       (width: 820px) and (height: 1180px), 
+       (width: 834px) and (height: 1194px),
+       (width: 810px) and (height: 1080px) {
+  .mobile-menu-toggle {
+    display: flex;
+  }
+  
+  .main-content {
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
+  
+  .sidebar-overlay {
+    display: block;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 99;
+  }
+  
+  .sidebar-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* Mobile view - Under 768px width */
 @media (max-width: 768px) {
   .content-wrapper {
     flex-direction: column;
