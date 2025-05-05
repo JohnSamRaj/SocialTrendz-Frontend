@@ -20,11 +20,11 @@ export class AuthService {
   // Current user state
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
-  
+
   // Tracking state for optimization
   private authRequestInProgress = false;
   private sessionRequest$: Observable<User> | null = null;
-  
+
   constructor(
     private router: Router,
     private dataService: DataService,
@@ -37,35 +37,52 @@ export class AuthService {
 
   /**
    * Initialize user data from storage or service with optimized loading
+   * Ensures consistent field names throughout the application
    */
   private initUserData(): void {
     // Try to load from local state first (fastest)
     const cachedUser = this.tryLoadFromLocalStorage();
     if (cachedUser) {
-      this.currentUserSubject.next(cachedUser);
+      // Always normalize during initialization
+      const normalizedUser = this.normalizeUserData(cachedUser);
+      console.log('Initialization: using normalized user data from localStorage:', normalizedUser);
+      this.currentUserSubject.next(normalizedUser);
     }
-    
+
     // Subscribe to user data from data service as backup and to keep in sync
     this.dataService.currentUser$.subscribe(user => {
       if (user) {
-        this.currentUserSubject.next(user);
-        // Update localStorage with latest data
-        this.storeUserData(user);
+        // Always normalize user data from backend
+        const normalizedUser = this.normalizeUserData(user);
+        console.log('Initialization: using normalized user data from service:', normalizedUser);
+        this.currentUserSubject.next(normalizedUser);
+        
+        // Update localStorage with latest normalized data
+        this.storeUserData(normalizedUser);
       }
     });
-    
+
     // Try to restore session
     this.dataService.tryRestoreSession();
   }
-  
+
   /**
    * Try to load user data from localStorage for faster initial load
+   * Returns the raw parsed data which will be normalized by the caller
    */
   private tryLoadFromLocalStorage(): User | null {
     try {
       const userJson = localStorage.getItem('currentUser');
       if (userJson) {
-        return JSON.parse(userJson) as User;
+        const parsedUser = JSON.parse(userJson);
+        
+        if (parsedUser) {
+          // Log the parsed user for debugging
+          console.log('Loaded raw user data from localStorage:', parsedUser);
+          
+          // Return the raw parsed data - normalization will happen in the caller
+          return parsedUser as User;
+        }
       }
     } catch (e) {
       console.error('Failed to parse user data from localStorage', e);
@@ -97,8 +114,31 @@ export class AuthService {
    */
   login(credentials: AuthCredentials): Observable<any> {
     return this.apiService.post<any>('auth/login', credentials).pipe(
-      tap(user => this.currentUserSubject.next(user)),
-      map(user => ({ user, needsOtpVerification: false })),
+      map(response => {
+        // Create user object from response with basic fields
+        const initialUser: User = {
+          id: response.id || Date.now(),
+          full_name: response.user_metadata?.full_name || response.full_name || response.email?.split('@')[0] || 'User',
+          email: response.email || response.user_metadata?.email || '',
+          profilePicture: response.user_metadata?.avatar_url || response.avatar_url || 'assets/images/default-profile.svg',
+          createdAt: new Date(response.created_at) || new Date(),
+          lastLogin: new Date(),
+          isVerified: response.email_confirmed_at ? true : false,
+          hasCompletedOnboarding: false,
+          authProvider: AuthProvider.EMAIL,
+          connectedPlatforms: []
+        };
+        
+        // Apply normalization to ensure consistent field names
+        const user = this.normalizeUserData(initialUser);
+        console.log('Login: normalized user data:', user);
+
+        // Store user data (which will apply normalization again)
+        this.storeUserData(user);
+        this.currentUserSubject.next(user);
+
+        return { user, needsOtpVerification: false };
+      }),
       catchError(error => throwError(() => new Error('Login failed: ' + error.message)))
     );
   }
@@ -111,20 +151,26 @@ export class AuthService {
   register(credentials: RegisterCredentials): Observable<{ user: User; needsOtpVerification: boolean }> {
     return this.apiService.post<{ user: User; needsOtpVerification: boolean }>('auth/signup', credentials)
     .pipe(
-      map(response => ({
-        user: response.user,
-        needsOtpVerification: true
-      })),
+      map(response => {
+        // Normalize user data to ensure consistent field names
+        const normalizedUser = this.normalizeUserData(response.user);
+        console.log('Register: normalized user data:', normalizedUser);
+        
+        return {
+          user: normalizedUser,
+          needsOtpVerification: true
+        };
+      }),
       catchError((error: HttpErrorResponse) => {
         console.error('Registration failed:', error);
-        
+
         return throwError(() => new Error(
           error.error?.error || 'Registration failed. Please try again.'
         )).pipe(delay(800));
       })
     );
   }
-  
+
   /**
    * Verify OTP for user registration or password reset
    * @param email User's email address
@@ -151,7 +197,7 @@ export class AuthService {
         })
       );
   }
-  
+
   /**
    * Resend OTP to user's email
    * @param email User's email address
@@ -161,7 +207,7 @@ export class AuthService {
     // In a real implementation, this would call an API endpoint to resend the OTP
     return of(true).pipe(delay(800)); // Simulate network delay
   }
-  
+
   /**
    * Login with Google OAuth
    * @returns Observable with user data
@@ -169,12 +215,12 @@ export class AuthService {
   loginWithGoogle(): Observable<{ user: User; needsOtpVerification: boolean }> {
     // Direct Supabase OAuth URL
     const supabaseUrl = 'https://cbzqqsrdwfuyyoidztky.supabase.co/auth/v1/authorize';
-    
+
     // Make sure the callback URL matches exactly what's configured in Supabase
     const returnUrl = window.location.origin + '/auth/callback';
-    
+
     console.log('Redirecting to Google OAuth with callback URL:', returnUrl);
-    
+
     const params = new URLSearchParams({
       provider: 'google',
       redirect_to: returnUrl
@@ -192,7 +238,7 @@ export class AuthService {
       needsOtpVerification: false
     });
   }
-  
+
   /**
    * Login with Apple OAuth (mock implementation)
    * @returns Observable with user data
@@ -204,13 +250,13 @@ export class AuthService {
     // Similar to the Google implementation above, this should redirect to the proper OAuth provider
     const appleUser: User = this.createMockUser('Apple User', AuthProvider.APPLE);
     this.updateCurrentUser(appleUser);
-    
+
     return of({
       user: appleUser,
       needsOtpVerification: false
     }).pipe(delay(800)); // Simulate network delay
   }
-  
+
   /**
    * Creates a mock user for demo purposes
    * @param name User name
@@ -235,14 +281,14 @@ export class AuthService {
       connectedPlatforms: []
     };
   }
-  
+
   /**
    * Handle OAuth callback for social sign-in
    * @returns Observable with user data
    */
   handleOAuthCallback(): Observable<{ user: User; needsOtpVerification: boolean }> {
     console.log('Handling OAuth callback...');
-    
+
     // Get the access token from URL
     const urlParams = new URLSearchParams(window.location.hash.substring(1));
     const accessToken = urlParams.get('access_token');
@@ -268,41 +314,77 @@ export class AuthService {
 
     // Get user data from Supabase session
     return this.apiService.get<{ user: User; needsOtpVerification: boolean }>('auth/session').pipe(
-      tap(response => {
-        console.log('Received session response:', response);
+      map(response => {
+        console.log('Response from session API:', response);
         
-        if (response.user) {
+        if (response && response.user) {
+          // Process and normalize user data to ensure consistent field names
+          const user = this.normalizeUserData(response.user);
+          
+          console.log('Processed user data:', user);
+          
           // Store user data
-          this.storeUserData(response.user);
-          this.currentUserSubject.next(response.user);
-
+          this.storeUserData(user);
+          this.currentUserSubject.next(user);
+          
           // Set session storage for success message
           sessionStorage.setItem('socialLoginSuccess', 'Welcome back! Logged in successfully.');
-
-          // Check if user needs to complete onboarding
-          if (!response.user.hasCompletedOnboarding) {
-            sessionStorage.setItem('openOnboardingModal', 'true');
-          }
-
-          console.log('Authentication successful, navigating to dashboard...');
           
-          // Always force navigation to dashboard for Google login
-          // This bypasses the normal flow to fix the redirect issue
-          this.router.navigate(['/dashboard'], { replaceUrl: true });
+          return { 
+            user, 
+            needsOtpVerification: response.needsOtpVerification || false 
+          };
         } else {
-          console.error('No user data in session response');
-          // If no user data, redirect to auth
-          this.router.navigate(['/auth'], { replaceUrl: true });
+          // If no valid user data, create a fallback user (this shouldn't typically happen)
+          console.error('Failed to get valid user data from session, using fallback');
+          
+          // Use fallback data for development purposes only
+          const fallbackUser: User = {
+            id: Date.now(),
+            full_name: 'Google User',
+            email: 'google-user@example.com',
+            profilePicture: 'assets/images/default-profile.svg',
+            createdAt: new Date(),
+            lastLogin: new Date(),
+            isVerified: true,
+            hasCompletedOnboarding: false,
+            authProvider: AuthProvider.GOOGLE,
+            connectedPlatforms: []
+          };
+          
+          // Store fallback user
+          this.storeUserData(fallbackUser);
+          this.currentUserSubject.next(fallbackUser);
+          
+          return { 
+            user: fallbackUser, 
+            needsOtpVerification: false 
+          };
         }
       }),
+      tap((response) => {
+        console.log('Authentication successful, preparing navigation...');
+        const userData = response.user;
+
+        // Use setTimeout to ensure state updates are complete before navigation
+        setTimeout(() => {
+          if (!userData.hasCompletedOnboarding) {
+            this.router.navigate(['/dashboard'], { replaceUrl: true });
+          } else if (!userData.connectedPlatforms || userData.connectedPlatforms.length === 0) {
+            this.router.navigate(['/accounts-connect'], { replaceUrl: true });
+          } else {
+            this.router.navigate(['/dashboard'], { replaceUrl: true });
+          }
+        }, 100);
+      }),
       catchError((error: HttpErrorResponse) => {
-        console.error('Failed to get session:', error);
+        console.error('Failed to process session:', error);
         // Clear any stored tokens on error
         localStorage.removeItem('access_token');
         localStorage.removeItem('expires_at');
         localStorage.removeItem('provider_token');
         localStorage.removeItem('refresh_token');
-        
+
         // Redirect to auth page on error
         this.router.navigate(['/auth'], { replaceUrl: true });
         return throwError(() => new Error(
@@ -313,10 +395,13 @@ export class AuthService {
   }
 
   /**
-   * Store user data in local storage
+   * Store user data in local storage 
+   * Ensures consistent field names are used
    */
   private storeUserData(user: User): void {
-    localStorage.setItem('currentUser', JSON.stringify(user));
+    // Make sure we always normalize before storing
+    const normalizedUser = this.normalizeUserData(user);
+    localStorage.setItem('currentUser', JSON.stringify(normalizedUser));
   }
 
   /**
@@ -329,20 +414,20 @@ export class AuthService {
       this.router.navigate(['/auth']);
       return;
     }
-    
+
     // Check if user needs to complete onboarding first
     if (!user.hasCompletedOnboarding) {
       this.router.navigate(['/dashboard']); // Onboarding modal will appear here
       return;
     }
-    
+
     // If user has completed onboarding but has no connected platforms,
     // redirect to accounts connect page
     if (!user.connectedPlatforms || user.connectedPlatforms.length === 0) {
       this.router.navigate(['/accounts-connect']);
       return;
     }
-    
+
     // Otherwise, go to dashboard
     this.router.navigate(['/dashboard']);
   }
@@ -353,7 +438,7 @@ export class AuthService {
   logout(): void {
     // Show toast notification before logout
     this.toastService.info('Logging out...');
-    
+
     this.dataService.logout().subscribe({
       next: () => this.handleLogoutSuccess(),
       error: (error) => {
@@ -362,7 +447,7 @@ export class AuthService {
       }
     });
   }
-  
+
   /**
    * Handle successful logout
    */
@@ -372,12 +457,52 @@ export class AuthService {
   }
 
   /**
+   * Ensures user data has consistent field names
+   * This helps maintain compatibility with backend field names
+   * @param user User object to normalize
+   * @returns User with consistent field names
+   */
+  private normalizeUserData(user: User): User {
+    if (!user) return user;
+    
+    // Handle different possible naming patterns for backend fields
+    // This is a type-safe approach that preserves the User type
+    const userData = {...user};
+    
+    // Check existing full_name first
+    if (!userData.full_name) {
+      // Check for any alternative field names that might be present in the raw data
+      const rawUser = user as any; // Use 'any' only for field detection
+      userData.full_name = 
+        rawUser.full_name || rawUser.name || rawUser.fullName || 
+        rawUser.displayName || rawUser.username || 'User';
+    }
+    
+    // Make sure email is set
+    if (!userData.email) {
+      const rawUser = user as any;
+      userData.email = rawUser.email || rawUser.userEmail || '';
+    }
+    
+    console.log('Normalized user data:', userData);
+    return userData;
+  }
+
+  /**
    * Update current user data
    * @param user Updated user object
    */
   updateCurrentUser(user: User): void {
-    this.currentUserSubject.next(user);
-    localStorage.setItem('currentUser', JSON.stringify(user));
+    // Normalize the user data to ensure consistent field naming
+    const normalizedUser = this.normalizeUserData(user);
+    
+    // Update the user in the behavior subject
+    this.currentUserSubject.next(normalizedUser);
+    
+    // Store in localStorage with consistent field names
+    localStorage.setItem('currentUser', JSON.stringify(normalizedUser));
+    
+    console.log('User data updated with normalized fields:', normalizedUser);
   }
 
   /**
@@ -390,14 +515,14 @@ export class AuthService {
     if (!currentUser) {
       return throwError(() => new Error('No authenticated user'));
     }
-    
+
     const updatedUser = {
       ...currentUser,
       hasCompletedOnboarding: completed
     };
-    
+
     this.updateCurrentUser(updatedUser);
-    
+
     // If onboarding is marked as completed, and the user doesn't have any connected platforms,
     // redirect to the accounts-connect page after a slight delay
     if (completed && (!updatedUser.connectedPlatforms || updatedUser.connectedPlatforms.length === 0)) {
@@ -405,7 +530,7 @@ export class AuthService {
         this.router.navigate(['/accounts-connect']);
       }, 300);
     }
-    
+
     return of(updatedUser);
   }
 
@@ -424,7 +549,7 @@ export class AuthService {
       tap(() => {
         // In a real app, this is where we'd send the email with OTP
         console.log(`Password reset requested for ${email}`);
-        
+
         // Store email in sessionStorage for the flow
         sessionStorage.setItem('resetEmail', email);
       }),
@@ -449,10 +574,10 @@ export class AuthService {
     if (otp.length !== 6 || !/^\d+$/.test(otp)) {
       return throwError(() => new Error('Invalid verification code. Must be a 6-digit number.'));
     }
-    
+
     // Store the OTP in sessionStorage for the final reset step
     sessionStorage.setItem('resetOTP', otp);
-    
+
     return of(true).pipe(
       delay(1000),
       catchError((error: HttpErrorResponse) => {
@@ -474,20 +599,20 @@ export class AuthService {
   resetPassword(email: string, otp: string, newPassword: string): Observable<boolean> {
     // DATABASE INTEGRATION: Replace with actual API call
     // Current simulation should be replaced with a real implementation
-    
+
     // Validate that the OTP matches what was verified
     const storedOTP = sessionStorage.getItem('resetOTP');
     if (storedOTP !== otp) {
       return throwError(() => new Error('Verification failed. Please restart the process.'));
     }
-    
+
     return of(true).pipe(
       delay(1500),
       tap(() => {
         // Clear reset-related session data
         sessionStorage.removeItem('resetEmail');
         sessionStorage.removeItem('resetOTP');
-        
+
         // In a real app, this is where the password would be updated
         console.log(`Password reset completed for ${email}`);
       }),

@@ -53,18 +53,26 @@ export class ProfileComponent implements OnInit {
       console.log('Current user from backend:', user);
       
       if (this.user) {
+        // Log the exact user object we received to debug field issues
+        console.log('User object fields:', {
+          full_name: this.user.full_name,
+          email: this.user.email
+        });
+        
         // Populate form with user data from backend
+        // Directly use full_name and email as those are the backend field names
         this.profileForm.patchValue({
           fullName: this.user.full_name || '',
           email: this.user.email || '',
-          // Additional profile fields would be populated here with real values
-          // For now using defaults if data is missing
-          bio: this.user.bio || 'Digital marketer and content creator',
-          location: this.user.location || 'San Francisco, CA',
-          website: this.user.website || 'https://example.com',
-          instagram: this.user.instagram || '@socialuser',
-          facebook: this.user.facebook || 'socialmediauser',
-          twitter: this.user.twitter || '@socialuser'
+          
+          // Additional profile fields used placeholder data
+          // These will be replaced with real backend data when available
+          bio: 'Digital marketer and content creator',
+          location: 'San Francisco, CA',
+          website: 'https://example.com',
+          instagram: '@socialuser',
+          facebook: 'socialmediauser',
+          twitter: '@socialuser'
         });
       } else {
         console.error('Failed to load user profile data');

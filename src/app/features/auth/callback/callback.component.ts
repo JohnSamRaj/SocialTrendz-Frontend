@@ -43,18 +43,28 @@ export class CallbackComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.authService.handleOAuthCallback().subscribe({
-      next: (response) => {
-        if (response.needsOtpVerification) {
-          this.router.navigate(['/auth/verify'], { replaceUrl: true });
-        } else {
-          this.router.navigate(['/dashboard'], { replaceUrl: true });
+    // Add a small delay to ensure URL parameters are properly parsed
+    setTimeout(() => {
+      this.authService.handleOAuthCallback().subscribe({
+        next: (response) => {
+          if (response.user) {
+            if (response.needsOtpVerification) {
+              this.router.navigate(['/auth/verify'], { replaceUrl: true });
+            } else {
+              // Navigation is handled in the service
+              console.log('Login successful, redirecting...');
+            }
+          } else {
+            this.toastService.error('Failed to get user data');
+            this.router.navigate(['/auth'], { replaceUrl: true });
+          }
+        },
+        error: (error) => {
+          console.error('Callback error:', error);
+          this.toastService.error(error.message || 'Authentication failed');
+          this.router.navigate(['/auth'], { replaceUrl: true });
         }
-      },
-      error: (error) => {
-        this.toastService.error(error.message);
-        this.router.navigate(['/auth'], { replaceUrl: true });
-      }
-    });
+      });
+    }, 100);
   }
 }
