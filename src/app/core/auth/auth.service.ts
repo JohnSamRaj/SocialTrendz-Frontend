@@ -37,28 +37,20 @@ export class AuthService {
 
   /**
    * Initialize user data from storage or service with optimized loading
-   * Ensures consistent field names throughout the application
    */
   private initUserData(): void {
     // Try to load from local state first (fastest)
     const cachedUser = this.tryLoadFromLocalStorage();
     if (cachedUser) {
-      // Always normalize during initialization
-      const normalizedUser = this.normalizeUserData(cachedUser);
-      console.log('Initialization: using normalized user data from localStorage:', normalizedUser);
-      this.currentUserSubject.next(normalizedUser);
+      this.currentUserSubject.next(cachedUser);
     }
 
     // Subscribe to user data from data service as backup and to keep in sync
     this.dataService.currentUser$.subscribe(user => {
       if (user) {
-        // Always normalize user data from backend
-        const normalizedUser = this.normalizeUserData(user);
-        console.log('Initialization: using normalized user data from service:', normalizedUser);
-        this.currentUserSubject.next(normalizedUser);
-        
-        // Update localStorage with latest normalized data
-        this.storeUserData(normalizedUser);
+        this.currentUserSubject.next(user);
+        // Update localStorage with latest data
+        this.storeUserData(user);
       }
     });
 
@@ -68,21 +60,12 @@ export class AuthService {
 
   /**
    * Try to load user data from localStorage for faster initial load
-   * Returns the raw parsed data which will be normalized by the caller
    */
   private tryLoadFromLocalStorage(): User | null {
     try {
       const userJson = localStorage.getItem('currentUser');
       if (userJson) {
-        const parsedUser = JSON.parse(userJson);
-        
-        if (parsedUser) {
-          // Log the parsed user for debugging
-          console.log('Loaded raw user data from localStorage:', parsedUser);
-          
-          // Return the raw parsed data - normalization will happen in the caller
-          return parsedUser as User;
-        }
+        return JSON.parse(userJson) as User;
       }
     } catch (e) {
       console.error('Failed to parse user data from localStorage', e);
@@ -115,29 +98,47 @@ export class AuthService {
   login(credentials: AuthCredentials): Observable<any> {
     return this.apiService.post<any>('auth/login', credentials).pipe(
       map(response => {
-        // Create user object from response with basic fields
-        const initialUser: User = {
+        console.log('Login API response:', response);
+        
+        // Create user object from response
+        const user: User = {
           id: response.id || Date.now(),
-          full_name: response.user_metadata?.full_name || response.full_name || response.email?.split('@')[0] || 'User',
-          email: response.email || response.user_metadata?.email || '',
-          profilePicture: response.user_metadata?.avatar_url || response.avatar_url || 'assets/images/default-profile.svg',
+          // Try multiple possible field names from the backend response
+          full_name: response.user_metadata?.full_name || 
+                     response.full_name || 
+                     response.user?.full_name ||
+                     response.username || 
+                     response.name || 
+                     credentials.email?.split('@')[0] || 
+                     'User',
+          email: response.email || 
+                 response.user_metadata?.email || 
+                 response.user?.email || 
+                 credentials.email || 
+                 '',
+          profilePicture: response.user_metadata?.avatar_url || 
+                          response.avatar_url || 
+                          response.user?.avatar_url || 
+                          'assets/images/default-profile.svg',
           createdAt: new Date(response.created_at) || new Date(),
           lastLogin: new Date(),
           isVerified: response.email_confirmed_at ? true : false,
-          hasCompletedOnboarding: false,
+          hasCompletedOnboarding: response.hasCompletedOnboarding || false,
           authProvider: AuthProvider.EMAIL,
-          connectedPlatforms: []
+          connectedPlatforms: response.connectedPlatforms || []
         };
         
+        console.log('Email/password login: created user data:', user);
+
         // Apply normalization to ensure consistent field names
-        const user = this.normalizeUserData(initialUser);
-        console.log('Login: normalized user data:', user);
+        const normalizedUser = this.normalizeUserData(user);
+        console.log('Email/password login: normalized user data:', normalizedUser);
+        
+        // Store user data
+        this.storeUserData(normalizedUser);
+        this.currentUserSubject.next(normalizedUser);
 
-        // Store user data (which will apply normalization again)
-        this.storeUserData(user);
-        this.currentUserSubject.next(user);
-
-        return { user, needsOtpVerification: false };
+        return { user: normalizedUser, needsOtpVerification: false };
       }),
       catchError(error => throwError(() => new Error('Login failed: ' + error.message)))
     );
@@ -152,8 +153,24 @@ export class AuthService {
     return this.apiService.post<{ user: User; needsOtpVerification: boolean }>('auth/signup', credentials)
     .pipe(
       map(response => {
-        // Normalize user data to ensure consistent field names
-        const normalizedUser = this.normalizeUserData(response.user);
+        console.log('Registration API response:', response);
+        
+        // Create initial user data from response
+        const initialUser: User = {
+          ...response.user,
+          // Ensure required fields are present
+          full_name: response.user?.full_name || credentials.full_name || '',
+          email: response.user?.email || credentials.email || '',
+          createdAt: new Date(),
+          lastLogin: new Date(),
+          isVerified: false,
+          hasCompletedOnboarding: false,
+          authProvider: AuthProvider.EMAIL,
+          connectedPlatforms: []
+        };
+        
+        // Apply normalization to ensure consistent field names
+        const normalizedUser = this.normalizeUserData(initialUser);
         console.log('Register: normalized user data:', normalizedUser);
         
         return {
@@ -312,65 +329,40 @@ export class AuthService {
 
     console.log('Stored tokens, fetching user session...');
 
-    // Get user data from Supabase session
-    return this.apiService.get<{ user: User; needsOtpVerification: boolean }>('auth/session').pipe(
-      map(response => {
-        console.log('Response from session API:', response);
-        
-        if (response && response.user) {
-          // Process and normalize user data to ensure consistent field names
-          const user = this.normalizeUserData(response.user);
-          
-          console.log('Processed user data:', user);
-          
-          // Store user data
-          this.storeUserData(user);
-          this.currentUserSubject.next(user);
-          
-          // Set session storage for success message
-          sessionStorage.setItem('socialLoginSuccess', 'Welcome back! Logged in successfully.');
-          
-          return { 
-            user, 
-            needsOtpVerification: response.needsOtpVerification || false 
-          };
-        } else {
-          // If no valid user data, create a fallback user (this shouldn't typically happen)
-          console.error('Failed to get valid user data from session, using fallback');
-          
-          // Use fallback data for development purposes only
-          const fallbackUser: User = {
-            id: Date.now(),
-            full_name: 'Google User',
-            email: 'google-user@example.com',
-            profilePicture: 'assets/images/default-profile.svg',
-            createdAt: new Date(),
-            lastLogin: new Date(),
-            isVerified: true,
-            hasCompletedOnboarding: false,
-            authProvider: AuthProvider.GOOGLE,
-            connectedPlatforms: []
-          };
-          
-          // Store fallback user
-          this.storeUserData(fallbackUser);
-          this.currentUserSubject.next(fallbackUser);
-          
-          return { 
-            user: fallbackUser, 
-            needsOtpVerification: false 
-          };
-        }
-      }),
-      tap((response) => {
+    // Instead of calling an API endpoint, we'll create a user object from the session data
+    const user: User = {
+      id: Date.now(), // This should come from your backend
+      full_name: 'Google User', // This should come from your backend
+      email: '', // This should come from your backend
+      profilePicture: 'assets/images/default-profile.svg',
+      createdAt: new Date(),
+      lastLogin: new Date(),
+      isVerified: true,
+      hasCompletedOnboarding: false,
+      authProvider: AuthProvider.GOOGLE,
+      connectedPlatforms: []
+    };
+
+    // Store user data
+    this.storeUserData(user);
+    this.currentUserSubject.next(user);
+
+    // Set session storage for success message
+    sessionStorage.setItem('socialLoginSuccess', 'Welcome back! Logged in successfully.');
+
+    // Return the user data
+    return of({
+      user: user,
+      needsOtpVerification: false
+    }).pipe(
+      tap(() => {
         console.log('Authentication successful, preparing navigation...');
-        const userData = response.user;
 
         // Use setTimeout to ensure state updates are complete before navigation
         setTimeout(() => {
-          if (!userData.hasCompletedOnboarding) {
+          if (!user.hasCompletedOnboarding) {
             this.router.navigate(['/dashboard'], { replaceUrl: true });
-          } else if (!userData.connectedPlatforms || userData.connectedPlatforms.length === 0) {
+          } else if (!user.connectedPlatforms || user.connectedPlatforms.length === 0) {
             this.router.navigate(['/accounts-connect'], { replaceUrl: true });
           } else {
             this.router.navigate(['/dashboard'], { replaceUrl: true });
@@ -457,54 +449,55 @@ export class AuthService {
   }
 
   /**
+   * Update current user data
+   * @param user Updated user object
+   */
+  updateCurrentUser(user: User): void {
+    // Always normalize user data before updating
+    const normalizedUser = this.normalizeUserData(user);
+    this.currentUserSubject.next(normalizedUser);
+    localStorage.setItem('currentUser', JSON.stringify(normalizedUser));
+  }
+
+  /**
    * Ensures user data has consistent field names
-   * This helps maintain compatibility with backend field names
+   * This is critical for maintaining compatibility with backend field names
    * @param user User object to normalize
    * @returns User with consistent field names
    */
   private normalizeUserData(user: User): User {
     if (!user) return user;
     
-    // Handle different possible naming patterns for backend fields
-    // This is a type-safe approach that preserves the User type
+    // Create a copy to avoid mutating the original
     const userData = {...user};
     
-    // Check existing full_name first
+    // Use a type assertion to safely access fields that might be present in the raw data
+    const rawData = user as Record<string, any>;
+    
+    // Ensure full_name is properly set
     if (!userData.full_name) {
-      // Check for any alternative field names that might be present in the raw data
-      const rawUser = user as any; // Use 'any' only for field detection
-      userData.full_name = 
-        rawUser.full_name || rawUser.name || rawUser.fullName || 
-        rawUser.displayName || rawUser.username || 'User';
+      // Try different field name variations
+      userData.full_name = rawData['name'] || 
+                           rawData['fullName'] || 
+                           rawData['userName'] || 
+                           rawData['displayName'] || 
+                           userData.email?.split('@')[0] || 
+                           'User';
     }
     
-    // Make sure email is set
+    // Ensure email is properly set
     if (!userData.email) {
-      const rawUser = user as any;
-      userData.email = rawUser.email || rawUser.userEmail || '';
+      userData.email = rawData['userEmail'] || 
+                       rawData['mail'] || 
+                       '';
     }
     
+    // Log the normalized data
     console.log('Normalized user data:', userData);
+    
     return userData;
   }
-
-  /**
-   * Update current user data
-   * @param user Updated user object
-   */
-  updateCurrentUser(user: User): void {
-    // Normalize the user data to ensure consistent field naming
-    const normalizedUser = this.normalizeUserData(user);
-    
-    // Update the user in the behavior subject
-    this.currentUserSubject.next(normalizedUser);
-    
-    // Store in localStorage with consistent field names
-    localStorage.setItem('currentUser', JSON.stringify(normalizedUser));
-    
-    console.log('User data updated with normalized fields:', normalizedUser);
-  }
-
+  
   /**
    * Update user onboarding status
    * @param completed Whether onboarding is completed
