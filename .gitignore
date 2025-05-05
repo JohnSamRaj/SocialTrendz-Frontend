@@ -1,0 +1,42 @@
+# Angular build and dependency folders
+/node_modules/
+/dist/
+/out-tsc/
+
+# Angular environment files (optional)
+src/environments/*.ts
+!src/environments/environment.prod.ts
+
+# IDEs and editors
+/.idea/
+/.vscode/
+/*.sublime-project
+/*.sublime-workspace
+
+# Logs
+*.log
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.swp
+
+# npm package locks
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Compiled files
+*.js
+*.js.map
+*.tsbuildinfo
+
+# Coverage reports
+/coverage/
+
+# Cache
+/.angular/cache/
+/.angular/cache/
