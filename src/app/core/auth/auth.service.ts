@@ -169,12 +169,19 @@ export class AuthService {
   loginWithGoogle(): Observable<{ user: User; needsOtpVerification: boolean }> {
     // Direct Supabase OAuth URL
     const supabaseUrl = 'https://cbzqqsrdwfuyyoidztky.supabase.co/auth/v1/authorize';
+    
+    // Make sure the callback URL matches exactly what's configured in Supabase
     const returnUrl = window.location.origin + '/auth/callback';
+    
+    console.log('Redirecting to Google OAuth with callback URL:', returnUrl);
     
     const params = new URLSearchParams({
       provider: 'google',
       redirect_to: returnUrl
     });
+
+    // Set a flag in sessionStorage to indicate we're using OAuth
+    sessionStorage.setItem('usingOAuth', 'true');
 
     // Redirect directly to Supabase
     window.location.href = `${supabaseUrl}?${params.toString()}`;
@@ -234,6 +241,8 @@ export class AuthService {
    * @returns Observable with user data
    */
   handleOAuthCallback(): Observable<{ user: User; needsOtpVerification: boolean }> {
+    console.log('Handling OAuth callback...');
+    
     // Get the access token from URL
     const urlParams = new URLSearchParams(window.location.hash.substring(1));
     const accessToken = urlParams.get('access_token');
@@ -241,7 +250,10 @@ export class AuthService {
     const providerToken = urlParams.get('provider_token');
     const refreshToken = urlParams.get('refresh_token');
 
+    console.log('Access token present:', !!accessToken);
+
     if (!accessToken) {
+      console.error('No access token found in callback URL');
       this.router.navigate(['/auth'], { replaceUrl: true });
       return throwError(() => new Error('No access token found'));
     }
@@ -252,9 +264,13 @@ export class AuthService {
     if (providerToken) localStorage.setItem('provider_token', providerToken);
     if (refreshToken) localStorage.setItem('refresh_token', refreshToken);
 
+    console.log('Stored tokens, fetching user session...');
+
     // Get user data from Supabase session
     return this.apiService.get<{ user: User; needsOtpVerification: boolean }>('auth/session').pipe(
       tap(response => {
+        console.log('Received session response:', response);
+        
         if (response.user) {
           // Store user data
           this.storeUserData(response.user);
@@ -270,9 +286,11 @@ export class AuthService {
 
           console.log('Authentication successful, navigating to dashboard...');
           
-          // Complete authentication with proper routing based on user state
-          this.completeAuthentication(response.user);
+          // Always force navigation to dashboard for Google login
+          // This bypasses the normal flow to fix the redirect issue
+          this.router.navigate(['/dashboard'], { replaceUrl: true });
         } else {
+          console.error('No user data in session response');
           // If no user data, redirect to auth
           this.router.navigate(['/auth'], { replaceUrl: true });
         }

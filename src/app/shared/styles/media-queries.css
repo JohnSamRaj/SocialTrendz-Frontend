@@ -143,6 +143,7 @@
     z-index: 1000 !important;
     transform: translateX(-100%) !important;
     box-shadow: 5px 0 15px rgba(0, 0, 0, 0.2) !important;
+    transition: transform 0.3s ease-in-out !important;
   }
   
   .sidebar.show {
@@ -152,5 +153,62 @@
   .main-content {
     margin-left: 0 !important;
     width: 100% !important;
+  }
+  
+  /* Fix for small screens in forms */
+  .form-group {
+    margin-bottom: 1rem !important;
+  }
+  
+  .form-control {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+  
+  /* Better button spacing on mobile */
+  .btn {
+    padding: 0.5rem 1rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  /* Improve card layouts on mobile */
+  .card {
+    margin-bottom: 1rem !important;
+  }
+  
+  /* Fix touch targets */
+  .nav-link, 
+  .sidebar-link,
+  .dropdown-item {
+    padding: 0.8rem 1rem !important;
+    min-height: 44px !important; /* Minimum touch target size */
+  }
+}
+
+/* Fix for very small devices (under 400px) */
+@media (max-width: 400px) {
+  .container, 
+  .container-fluid {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+  
+  h1, .h1 { font-size: 1.75rem !important; }
+  h2, .h2 { font-size: 1.5rem !important; }
+  h3, .h3 { font-size: 1.25rem !important; }
+  
+  /* Stack buttons on very small screens */
+  .btn-group {
+    flex-direction: column !important;
+  }
+  
+  /* Adjust form layouts */
+  .form-row {
+    flex-direction: column !important;
+  }
+  
+  .form-row > .col,
+  .form-row > [class*="col-"] {
+    padding-right: 0 !important;
+    padding-left: 0 !important;
   }
 }

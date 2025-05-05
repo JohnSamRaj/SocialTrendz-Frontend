@@ -1,12 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ErrorHandler } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { RouterOutlet, Router, NavigationEnd, NavigationError, NavigationCancel } from '@angular/router';
 import { HeaderComponent } from './shared/components/header/header.component';
 import { SidebarComponent } from './shared/components/sidebar/sidebar.component';
 import { ToastMessageComponent } from './shared/components/toast-message/toast-message.component';
 import { OnboardingModalComponent } from './shared/components/onboarding-modal/onboarding-modal.component';
 import { AuthService } from './core/auth/auth.service';
-import { filter } from 'rxjs/operators';
+import { ToastService } from './shared/services/toast.service';
+import { filter, takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -22,18 +24,41 @@ import { filter } from 'rxjs/operators';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   title = 'SocialTrendz';
   isSidebarOpen = false;
   isSidebarCollapsed = true; // Start with collapsed sidebar
+  isLoading = false; // Track loading state
   
   isAuthPage = false;
   showOnboardingModal = false;
   
+  // For cleanup of subscriptions
+  private destroy$ = new Subject<void>();
+  
+  // Track visibility of the app for performance improvements
+  private isVisible = true;
+  
   constructor(
     public authService: AuthService,
-    private router: Router
-  ) {}
+    private router: Router,
+    private toastService: ToastService,
+    private errorHandler: ErrorHandler
+  ) {
+    // Track and handle routing errors
+    this.router.events
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(event => {
+        if (event instanceof NavigationError) {
+          // Handle navigation errors
+          this.errorHandler.handleError(event.error);
+          this.toastService.error('Navigation error occurred. Please try again.');
+        } else if (event instanceof NavigationCancel) {
+          // Handle cancelled navigation
+          console.warn('Navigation cancelled:', event);
+        }
+      });
+  }
   
   ngOnInit(): void {
     // Check the current route to determine if we're on an auth page
@@ -177,5 +202,27 @@ export class AppComponent implements OnInit {
    */
   onOnboardingSkipped(): void {
     this.showOnboardingModal = false;
+  }
+  
+  /**
+   * Clean up resources when component is destroyed
+   */
+  ngOnDestroy(): void {
+    // Complete the destroy subject and unsubscribe from all subscriptions
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+  
+  /**
+   * Optimize app performance when page is hidden
+   */
+  @HostListener('document:visibilitychange')
+  onVisibilityChange(): void {
+    this.isVisible = document.visibilityState === 'visible';
+    
+    // When app becomes visible again, check auth status
+    if (this.isVisible) {
+      this.authService.getCurrentUser();
+    }
   }
 }

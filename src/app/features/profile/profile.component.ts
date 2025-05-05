@@ -45,28 +45,33 @@ export class ProfileComponent implements OnInit {
   loadUserProfile(): void {
     this.isLoading = true;
     
-    // Get current user data
-    this.user = this.authService.getCurrentUser();
-    
-    // Simulate API call delay
-    setTimeout(() => {
+    // Get current user data directly from the auth service's observable
+    // This ensures we always have the latest data from the backend
+    this.authService.currentUser$.subscribe(user => {
+      this.user = user;
+      
+      console.log('Current user from backend:', user);
+      
       if (this.user) {
-        // Populate form with user data
+        // Populate form with user data from backend
         this.profileForm.patchValue({
-          fullName: this.user.full_name,
-          email: this.user.email,
-          // Additional profile fields would be populated here
-          bio: 'Digital marketer and content creator',
-          location: 'San Francisco, CA',
-          website: 'https://example.com',
-          instagram: '@socialuser',
-          facebook: 'socialmediauser',
-          twitter: '@socialuser'
+          fullName: this.user.full_name || '',
+          email: this.user.email || '',
+          // Additional profile fields would be populated here with real values
+          // For now using defaults if data is missing
+          bio: this.user.bio || 'Digital marketer and content creator',
+          location: this.user.location || 'San Francisco, CA',
+          website: this.user.website || 'https://example.com',
+          instagram: this.user.instagram || '@socialuser',
+          facebook: this.user.facebook || 'socialmediauser',
+          twitter: this.user.twitter || '@socialuser'
         });
+      } else {
+        console.error('Failed to load user profile data');
       }
       
       this.isLoading = false;
-    }, 800);
+    });
   }
   
   saveProfile(): void {
@@ -78,16 +83,32 @@ export class ProfileComponent implements OnInit {
     this.successMessage = '';
     this.errorMessage = '';
     
-    // Simulate API call delay
-    setTimeout(() => {
-      // Here we would typically make an API call to update the user profile
+    // Get form values
+    const formValues = this.profileForm.value;
+    
+    // Create updated user object with form values
+    if (this.user) {
+      const updatedUser: User = {
+        ...this.user,
+        full_name: formValues.fullName,
+        email: formValues.email,
+        // In a real implementation, we would also update these fields
+        // bio: formValues.bio,
+        // location: formValues.location,
+        // website: formValues.website,
+        // instagram: formValues.instagram,
+        // facebook: formValues.facebook,
+        // twitter: formValues.twitter
+      };
       
-      // Update local user data
-      if (this.user) {
-        this.user.full_name = this.profileForm.value.fullName;
-        // Other fields would be updated in a real implementation
-      }
+      // Log the update we're about to make
+      console.log('Updating user profile:', updatedUser);
       
+      // Update user in the auth service
+      this.authService.updateCurrentUser(updatedUser);
+      
+      // Here we would typically make an API call to update the profile
+      // For now just show success message
       this.isSaving = false;
       this.successMessage = 'Profile updated successfully!';
       this.toastService.success('Profile updated successfully!');
@@ -96,7 +117,11 @@ export class ProfileComponent implements OnInit {
       setTimeout(() => {
         this.successMessage = '';
       }, 3000);
-    }, 1500);
+    } else {
+      this.isSaving = false;
+      this.errorMessage = 'Failed to update profile. User data not found.';
+      this.toastService.error('Failed to update profile. Please try again.');
+    }
   }
   
   // Function to handle profile image upload

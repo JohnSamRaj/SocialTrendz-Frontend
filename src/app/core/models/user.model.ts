@@ -15,6 +15,14 @@ export interface User {
   isVerified?: boolean;
   hasCompletedOnboarding?: boolean;
   connectedPlatforms?: string[];
+  
+  // Additional profile fields
+  bio?: string;
+  location?: string;
+  website?: string;
+  instagram?: string;
+  facebook?: string;
+  twitter?: string;
 }
 
 export interface AuthCredentials {
