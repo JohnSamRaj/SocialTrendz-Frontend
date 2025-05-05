@@ -27,7 +27,7 @@
   width: 90%;
   max-width: 600px;
   height: auto;
-  max-height: 80vh;
+  max-height: 85vh;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
@@ -41,6 +41,7 @@
   margin-top: 20px;
   z-index: 1010;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .exit-button {
@@ -689,9 +690,9 @@ textarea:focus {
 /* Large monitors and laptops */
 @media (min-width: 1440px) {
   .onboarding-modal {
-    width: 700px;
-    max-width: 700px;
-    max-height: 70vh;
+    width: 740px;
+    max-width: 740px;
+    max-height: 85vh;
     top: 50%;
     left: 50%;
     margin-top: 40px; /* Add extra top spacing to avoid header overlap */
@@ -705,22 +706,20 @@ textarea:focus {
     padding: 30px;
   }
   
-  /* Make content scrollable if needed */
+  /* Remove inner scrolling */
   .questionnaire, 
   .onboarding-intro, 
   .onboarding-outro {
-    max-height: calc(70vh - 120px);
-    overflow-y: auto;
-    padding-right: 10px;
+    padding-right: 0;
   }
 }
 
 /* Medium-sized screens */
 @media (min-width: 769px) and (max-width: 1439px) {
   .onboarding-modal {
-    width: 600px;
-    max-width: 600px;
-    max-height: 75vh;
+    width: 620px;
+    max-width: 620px;
+    max-height: 85vh;
     top: 50%;
     left: 50%;
     margin-top: 30px; /* Add top spacing to avoid header overlap */
@@ -730,13 +729,11 @@ textarea:focus {
     transform: translate(-50%, -50%) translateY(20px);
   }
   
-  /* Make content scrollable if needed */
+  /* Remove inner scrolling */
   .questionnaire, 
   .onboarding-intro, 
   .onboarding-outro {
-    max-height: calc(75vh - 100px);
-    overflow-y: auto;
-    padding-right: 10px;
+    padding-right: 0;
   }
 }
 
