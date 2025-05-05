@@ -132,7 +132,6 @@ export class ForgotPasswordComponent implements OnInit {
     
     this.authService.resetPassword(
       this.userEmail, 
-      this.otpForm.value.otp, 
       this.resetPasswordForm.value.password
     ).subscribe({
       next: () => {

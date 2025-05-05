@@ -535,20 +535,20 @@ export class AuthService {
    * TODO: Implement actual password reset with backend API
    */
   requestPasswordReset(email: string): Observable<boolean> {
-    // DATABASE INTEGRATION: Replace with actual API endpoint call
-    // This simulation should be replaced with a real implementation
-    return of(true).pipe(
-      delay(1500),
-      tap(() => {
-        // In a real app, this is where we'd send the email with OTP
-        console.log(`Password reset requested for ${email}`);
-
-        // Store email in sessionStorage for the flow
-        sessionStorage.setItem('resetEmail', email);
+    return this.apiService.post<{message: string}>('auth/forgot-password', { email }).pipe(
+      map(response => {
+        if (response.message === 'Password reset email sent successfully') {
+          // Store email in sessionStorage for the flow
+          sessionStorage.setItem('resetEmail', email);
+          return true;
+        }
+        return false;
       }),
       catchError((error: HttpErrorResponse) => {
         console.error('Password reset request failed:', error);
-        return throwError(() => new Error('Failed to process your request. Please try again.'));
+        return throwError(() => new Error(
+          error.error?.error || 'Failed to process your request. Please try again.'
+        ));
       })
     );
   }
@@ -558,24 +558,25 @@ export class AuthService {
    * @param email User's email address
    * @param otp One-time password code
    * @returns Observable indicating success
-   * @deprecated This method simulates OTP verification and should be replaced with actual API validation
-   * TODO: Implement actual OTP verification against backend
    */
   verifyPasswordResetOTP(email: string, otp: string): Observable<boolean> {
-    // DATABASE INTEGRATION: Replace with actual API validation
-    // Currently using simplified validation logic that should be replaced
-    if (otp.length !== 6 || !/^\d+$/.test(otp)) {
-      return throwError(() => new Error('Invalid verification code. Must be a 6-digit number.'));
-    }
-
-    // Store the OTP in sessionStorage for the final reset step
-    sessionStorage.setItem('resetOTP', otp);
-
-    return of(true).pipe(
-      delay(1000),
+    return this.apiService.post<{message: string}>('auth/verify-otp', {
+      email,
+      otp: otp
+    }).pipe(
+      map(response => {
+        if (response.message === 'Token verified successfully') {
+          // Store the token in sessionStorage for the final reset step
+          sessionStorage.setItem('resetToken', otp);
+          return true;
+        }
+        return false;
+      }),
       catchError((error: HttpErrorResponse) => {
-        console.error('OTP verification failed:', error);
-        return throwError(() => new Error('Invalid verification code. Please try again.'));
+        console.error('Token verification failed:', error);
+        return throwError(() => new Error(
+          error.error?.error || 'Invalid verification code. Please try again.'
+        ));
       })
     );
   }
@@ -586,32 +587,25 @@ export class AuthService {
    * @param otp Verified one-time password
    * @param newPassword New password to set
    * @returns Observable indicating success
-   * @deprecated This method simulates password reset and should be replaced with actual API call
-   * TODO: Implement actual password change via backend API
    */
-  resetPassword(email: string, otp: string, newPassword: string): Observable<boolean> {
-    // DATABASE INTEGRATION: Replace with actual API call
-    // Current simulation should be replaced with a real implementation
-
-    // Validate that the OTP matches what was verified
-    const storedOTP = sessionStorage.getItem('resetOTP');
-    if (storedOTP !== otp) {
-      return throwError(() => new Error('Verification failed. Please restart the process.'));
-    }
-
-    return of(true).pipe(
-      delay(1500),
-      tap(() => {
-        // Clear reset-related session data
-        sessionStorage.removeItem('resetEmail');
-        sessionStorage.removeItem('resetOTP');
-
-        // In a real app, this is where the password would be updated
-        console.log(`Password reset completed for ${email}`);
+  resetPassword(email: string, newPassword: string): Observable<boolean> {
+    return this.apiService.post<{message: string}>('auth/reset-password', {
+      email,
+      newPassword
+    }).pipe(
+      map(response => {
+        if (response.message === 'Password reset successfully') {
+          // Clear reset-related session data
+          sessionStorage.removeItem('resetEmail');
+          return true;
+        }
+        return false;
       }),
       catchError((error: HttpErrorResponse) => {
         console.error('Password reset failed:', error);
-        return throwError(() => new Error('Failed to reset password. Please try again.'));
+        return throwError(() => new Error(
+          error.error?.error || 'Failed to reset password. Please try again.'
+        ));
       })
     );
   }

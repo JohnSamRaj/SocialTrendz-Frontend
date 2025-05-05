@@ -30,13 +30,16 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
-  position: absolute;
+  position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) translateY(-20px);
   padding: 25px;
   opacity: 0;
   transition: opacity 0.3s ease, transform 0.3s ease;
+  margin-top: 0;
+  z-index: 1010;
+  overflow-y: auto;
 }
 
 .exit-button {
@@ -309,8 +312,26 @@
   display: flex;
   gap: 12px;
   margin-top: 20px;
-  justify-content: space-between;
+  margin-bottom: 10px;
+  justify-content: center;
   width: 100%;
+}
+
+/* Different layout for questionnaire buttons (3 buttons side by side) */
+.questionnaire-buttons {
+  justify-content: space-between;
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+}
+
+.questionnaire-buttons .btn-back,
+.questionnaire-buttons .btn-skip {
+  flex-basis: 30%;
+}
+
+.questionnaire-buttons .btn-next {
+  flex-basis: 40%;
 }
 
 .btn-primary,
@@ -323,6 +344,7 @@
   border: none;
   min-width: 90px;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .btn-primary {
@@ -731,6 +753,7 @@ textarea:focus {
     top: 50%;
     left: 50%;
     max-height: 80vh;
+    margin-top: 0;
   }
 
   .onboarding-header {
@@ -757,17 +780,51 @@ textarea:focus {
   .action-buttons {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: center;
     gap: 8px;
     width: 100%;
+    margin-top: 15px;
+    margin-bottom: 5px;
+  }
+  
+  /* Keep the questionnaire buttons in a row with proper spacing */
+  .questionnaire-buttons {
+    justify-content: space-between;
+    flex-wrap: nowrap;
+  }
+  
+  /* For questionnaire with 3 buttons, ensure proper sizing */
+  .questionnaire-buttons .btn-back,
+  .questionnaire-buttons .btn-skip {
+    flex-basis: 30%;
+    min-width: 70px;
+    padding: 8px 5px;
+  }
+  
+  .questionnaire-buttons .btn-next {
+    flex-basis: 40%;
+    min-width: 90px;
   }
 
   .btn-primary, 
   .btn-secondary {
     padding: 8px 10px;
-    min-width: 80px;
+    min-width: 90px;
     font-size: 14px;
-    flex: 1;
+  }
+  
+  /* Intro and outro screens have different button layouts */
+  .onboarding-intro .action-buttons,
+  .onboarding-outro .action-buttons {
+    justify-content: center;
+    flex-wrap: nowrap;
+  }
+  
+  .onboarding-intro .btn-primary, 
+  .onboarding-intro .btn-secondary,
+  .onboarding-outro .btn-primary {
+    flex: 0 1 auto;
+    min-width: 120px;
   }
 
   .btn {
@@ -800,15 +857,16 @@ textarea:focus {
 }
 
 /* iPhone SE and similar small phones (375x667) */
-@media (width: 375px) and (height: 667px), (max-width: 375px) {
+@media (max-width: 375px) {
   .onboarding-modal {
     width: 95%;
     height: auto;
     max-height: 75vh;
-    padding: 10px 10px;
+    padding: 15px 10px;
     top: 50%;
     left: 50%;
-    overflow: hidden;
+    overflow-y: auto;
+    margin-top: 0;
   }
 
   .onboarding-modal.active {
@@ -822,22 +880,45 @@ textarea:focus {
     height: 24px;
   }
 
-  .action-buttons {
+  /* Special handling for the questionnaire screen buttons */
+  .questionnaire-buttons {
     display: flex;
-    flex-direction: row;
     justify-content: space-between;
-    gap: 3px;
+    gap: 4px;
     margin-top: 10px;
     width: 100%;
-    margin-bottom: 0;
+    margin-bottom: 5px;
   }
-
-  .btn-primary, 
-  .btn-secondary {
-    padding: 6px 4px;
-    min-width: 60px;
-    font-size: 12px;
+  
+  /* Make all three buttons equal width in the questionnaire */
+  .questionnaire-buttons .btn-back,
+  .questionnaire-buttons .btn-skip,
+  .questionnaire-buttons .btn-next {
     flex: 1;
+    min-width: unset;
+    padding: 6px 2px;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  
+  /* Intro/outro screen buttons */
+  .onboarding-intro .action-buttons,
+  .onboarding-outro .action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+    width: 100%;
+  }
+  
+  .onboarding-intro .btn-primary, 
+  .onboarding-intro .btn-secondary,
+  .onboarding-outro .btn-primary {
+    width: 100%;
+    padding: 8px 4px;
+    font-size: 14px;
   }
 
   .onboarding-intro,

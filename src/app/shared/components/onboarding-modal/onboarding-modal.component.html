@@ -60,10 +60,10 @@
         </form>
       </div>
       
-      <div class="action-buttons">
-        <button type="button" class="btn-secondary" (click)="previousQuestion()">Back</button>
-        <button type="button" class="btn-secondary" (click)="skipQuestion()">Skip</button>
-        <button type="button" class="btn-primary" (click)="nextQuestion()">
+      <div class="action-buttons questionnaire-buttons">
+        <button type="button" class="btn-secondary btn-back" (click)="previousQuestion()">Back</button>
+        <button type="button" class="btn-secondary btn-skip" (click)="skipQuestion()">Skip</button>
+        <button type="button" class="btn-primary btn-next" (click)="nextQuestion()">
           {{ currentQuestionIndex < totalQuestions - 1 ? 'Next' : 'Finish' }}
         </button>
       </div>
