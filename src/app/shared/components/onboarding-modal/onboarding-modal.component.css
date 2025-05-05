@@ -4,7 +4,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -12,7 +12,8 @@
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(3px);
+  padding-top: 60px; /* Add padding to move content down from the header */
 }
 
 .modal-backdrop.active {
@@ -26,18 +27,18 @@
   width: 90%;
   max-width: 600px;
   height: auto;
-  max-height: 85vh;
+  max-height: 80vh;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
   position: fixed;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) translateY(-20px);
+  transform: translate(-50%, -50%);
   padding: 25px;
   opacity: 0;
   transition: opacity 0.3s ease, transform 0.3s ease;
-  margin-top: 0;
+  margin-top: 20px;
   z-index: 1010;
   overflow-y: auto;
 }
@@ -69,6 +70,7 @@
 .onboarding-modal.active {
   opacity: 1;
   transform: translate(-50%, -50%);
+  margin-top: 20px; /* Consistent top margin when active */
 }
 
 .onboarding-header {
@@ -689,17 +691,27 @@ textarea:focus {
   .onboarding-modal {
     width: 700px;
     max-width: 700px;
-    max-height: 80vh;
+    max-height: 70vh;
     top: 50%;
     left: 50%;
+    margin-top: 40px; /* Add extra top spacing to avoid header overlap */
   }
 
   .onboarding-modal.active {
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) translateY(30px);
   }
 
   .onboarding-content {
     padding: 30px;
+  }
+  
+  /* Make content scrollable if needed */
+  .questionnaire, 
+  .onboarding-intro, 
+  .onboarding-outro {
+    max-height: calc(70vh - 120px);
+    overflow-y: auto;
+    padding-right: 10px;
   }
 }
 
@@ -708,13 +720,23 @@ textarea:focus {
   .onboarding-modal {
     width: 600px;
     max-width: 600px;
-    max-height: 85vh;
+    max-height: 75vh;
     top: 50%;
     left: 50%;
+    margin-top: 30px; /* Add top spacing to avoid header overlap */
   }
 
   .onboarding-modal.active {
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) translateY(20px);
+  }
+  
+  /* Make content scrollable if needed */
+  .questionnaire, 
+  .onboarding-intro, 
+  .onboarding-outro {
+    max-height: calc(75vh - 100px);
+    overflow-y: auto;
+    padding-right: 10px;
   }
 }
 
