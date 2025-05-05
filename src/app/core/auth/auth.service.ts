@@ -169,9 +169,11 @@ export class AuthService {
   loginWithGoogle(): Observable<{ user: User; needsOtpVerification: boolean }> {
     // Direct Supabase OAuth URL
     const supabaseUrl = 'https://cbzqqsrdwfuyyoidztky.supabase.co/auth/v1/authorize';
+    const returnUrl = window.location.origin + '/auth/callback';
+    
     const params = new URLSearchParams({
       provider: 'google',
-      redirect_to: 'https://cbzqqsrdwfuyyoidztky.supabase.co/auth/v1/callback'
+      redirect_to: returnUrl
     });
 
     // Redirect directly to Supabase
@@ -266,8 +268,10 @@ export class AuthService {
             sessionStorage.setItem('openOnboardingModal', 'true');
           }
 
-          // Force navigation to dashboard
-          this.router.navigate(['/dashboard'], { replaceUrl: true });
+          console.log('Authentication successful, navigating to dashboard...');
+          
+          // Complete authentication with proper routing based on user state
+          this.completeAuthentication(response.user);
         } else {
           // If no user data, redirect to auth
           this.router.navigate(['/auth'], { replaceUrl: true });

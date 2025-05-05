@@ -28,16 +28,16 @@
     
     <div class="user-menu" *ngIf="user" [class.active]="isProfileMenuOpen">
       <div class="user-avatar" (click)="toggleProfileMenu($event)">
-        <img *ngIf="user?.profilePicture" [src]="user.profilePicture" alt="Profile Picture">
-        <div *ngIf="!user?.profilePicture" class="avatar-placeholder">
-          {{ user?.full_name ? user.full_name[0] : 'U' }}
+        <img *ngIf="user.profilePicture" [src]="user.profilePicture" alt="Profile Picture">
+        <div *ngIf="!user.profilePicture" class="avatar-placeholder">
+          {{ user.full_name ? user.full_name[0] : 'U' }}
         </div>
       </div>
       
       <div class="user-dropdown" [class.show]="isProfileMenuOpen">
         <div class="user-info">
-          <p class="user-name">{{ user?.full_name || 'User' }}</p>
-          <p class="user-email">{{ user?.email || 'user@example.com' }}</p>
+          <p class="user-name">{{ user.full_name }}</p>
+          <p class="user-email">{{ user.email }}</p>
         </div>
         
         <div class="dropdown-divider"></div>
