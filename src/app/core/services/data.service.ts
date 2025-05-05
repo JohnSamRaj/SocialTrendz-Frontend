@@ -57,7 +57,7 @@ export class DataService {
   private createDemoUser(): User {
     return {
       id: 1,
-      fullName: 'Demo User',
+      full_name: 'Demo User',
       email: 'demo@example.com',
       profilePicture: 'assets/images/default-profile.svg',
       createdAt: new Date('2023-01-15'),
@@ -198,7 +198,7 @@ export class DataService {
   private handleNewUserLogin(email: string): Observable<User> {
     const newUser: User = {
       id: Date.now(),
-      fullName: email.split('@')[0],
+      full_name: email.split('@')[0],
       email,
       createdAt: new Date(),
       lastLogin: new Date(),

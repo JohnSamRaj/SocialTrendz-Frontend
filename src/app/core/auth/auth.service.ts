@@ -187,8 +187,12 @@ export class AuthService {
   /**
    * Login with Apple OAuth (mock implementation)
    * @returns Observable with user data
+   * @deprecated This method uses mock data and should be replaced with actual Apple OAuth integration
+   * TODO: Implement actual Apple OAuth flow
    */
   loginWithApple(): Observable<{ user: User; needsOtpVerification: boolean }> {
+    // DATABASE INTEGRATION: Replace this mock implementation with actual Apple OAuth flow
+    // Similar to the Google implementation above, this should redirect to the proper OAuth provider
     const appleUser: User = this.createMockUser('Apple User', AuthProvider.APPLE);
     this.updateCurrentUser(appleUser);
     
@@ -203,11 +207,15 @@ export class AuthService {
    * @param name User name
    * @param provider Auth provider
    * @returns User object
+   * @deprecated This method uses mock data and should be replaced with actual user data from the backend
+   * TODO: Remove when real authentication is implemented
    */
   private createMockUser(name: string, provider: AuthProvider): User {
+    // DATABASE INTEGRATION: This entire method should be removed
+    // when real authentication with database is implemented
     return {
       id: Date.now(),
-      fullName: name,
+      full_name: name,
       email: `${name.toLowerCase().replace(' ', '-')}@example.com`,
       profilePicture: 'assets/images/default-profile.svg',
       createdAt: new Date(),
@@ -383,10 +391,12 @@ export class AuthService {
    * Request a password reset by providing the user's email
    * @param email User's email address
    * @returns Observable indicating success
+   * @deprecated This method simulates password reset and should be replaced with actual API integration
+   * TODO: Implement actual password reset with backend API
    */
   requestPasswordReset(email: string): Observable<boolean> {
-    // In a real application, this would call an API endpoint
-    // Here we'll simulate a successful API call with a delay
+    // DATABASE INTEGRATION: Replace with actual API endpoint call
+    // This simulation should be replaced with a real implementation
     return of(true).pipe(
       delay(1500),
       tap(() => {
@@ -408,10 +418,12 @@ export class AuthService {
    * @param email User's email address
    * @param otp One-time password code
    * @returns Observable indicating success
+   * @deprecated This method simulates OTP verification and should be replaced with actual API validation
+   * TODO: Implement actual OTP verification against backend
    */
   verifyPasswordResetOTP(email: string, otp: string): Observable<boolean> {
-    // In a real application, this would validate the OTP against the API
-    // Here we'll simulate validation - any 6-digit code works
+    // DATABASE INTEGRATION: Replace with actual API validation
+    // Currently using simplified validation logic that should be replaced
     if (otp.length !== 6 || !/^\d+$/.test(otp)) {
       return throwError(() => new Error('Invalid verification code. Must be a 6-digit number.'));
     }
@@ -434,10 +446,12 @@ export class AuthService {
    * @param otp Verified one-time password
    * @param newPassword New password to set
    * @returns Observable indicating success
+   * @deprecated This method simulates password reset and should be replaced with actual API call
+   * TODO: Implement actual password change via backend API
    */
   resetPassword(email: string, otp: string, newPassword: string): Observable<boolean> {
-    // In a real application, this would submit to an API
-    // Here we'll just simulate success
+    // DATABASE INTEGRATION: Replace with actual API call
+    // Current simulation should be replaced with a real implementation
     
     // Validate that the OTP matches what was verified
     const storedOTP = sessionStorage.getItem('resetOTP');

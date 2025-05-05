@@ -152,6 +152,46 @@
       <div class="settings-panel" *ngIf="activeTab === 'security'">
         <h2>Security Settings</h2>
         
+        <!-- Email Verification Section -->
+        <div class="security-section" *ngIf="!isEmailVerified">
+          <h3>Email Verification</h3>
+          <p>Your email is not verified. Please verify your email for enhanced security.</p>
+          <div class="verification-actions">
+            <button type="button" class="btn-primary" (click)="sendVerificationEmail()" [disabled]="isSendingVerification">
+              <i class="fas fa-spinner fa-spin" *ngIf="isSendingVerification"></i>
+              <span *ngIf="!isSendingVerification">Send Verification Email</span>
+            </button>
+          </div>
+          
+          <!-- Display after sending verification email -->
+          <div class="verification-info" *ngIf="showVerificationInput">
+            <p>A verification code has been sent to your email address. Please enter the code below.</p>
+            <div class="otp-input-group">
+              <input type="text" maxlength="6" placeholder="Enter 6-digit code" [(ngModel)]="verificationCode" [ngModelOptions]="{standalone: true}">
+              <button type="button" class="btn-primary" (click)="verifyOtp()" [disabled]="isVerifyingOtp || !verificationCode || verificationCode.length < 6">
+                <i class="fas fa-spinner fa-spin" *ngIf="isVerifyingOtp"></i>
+                <span *ngIf="!isVerifyingOtp">Verify</span>
+              </button>
+            </div>
+            <div class="resend-action" *ngIf="!canResendVerification">
+              <span>Can resend in {{ resendCountdown }} seconds</span>
+            </div>
+            <div class="resend-action" *ngIf="canResendVerification">
+              <button type="button" class="btn-link" (click)="sendVerificationEmail()">Resend Code</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="security-section" *ngIf="isEmailVerified">
+          <h3>Email Verification</h3>
+          <div class="verified-badge">
+            <i class="fas fa-check-circle"></i>
+            <span>Your email has been verified</span>
+          </div>
+        </div>
+        
+        <hr class="section-divider">
+        
         <form [formGroup]="securityForm" (submit)="saveSecuritySettings()">
           <div class="form-group">
             <label for="currentPassword">Current Password</label>
@@ -175,6 +215,8 @@
             </button>
           </div>
         </form>
+        
+        <hr class="section-divider">
         
         <div class="security-additional">
           <h3>Two-Factor Authentication</h3>

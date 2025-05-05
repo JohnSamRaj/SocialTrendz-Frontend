@@ -21,11 +21,11 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npx --no-install ng serve --host=0.0.0.0 --port=5000 --disable-host-check"
+args = "npx ng serve --host=0.0.0.0 --port=5000 --disable-host-check"
 waitForPort = 5000
 
 [deployment]
-run = ["sh", "-c", "npx --no-install ng serve --host=0.0.0.0 --port=5000 --disable-host-check"]
+run = ["sh", "-c", "npx ng serve --host=0.0.0.0 --port=5000 --disable-host-check"]
 
 [[ports]]
 localPort = 5000

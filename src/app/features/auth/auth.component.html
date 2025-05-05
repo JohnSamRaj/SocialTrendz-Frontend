@@ -24,7 +24,7 @@
         {{ errorMessage }}
       </div>
       
-      <!-- Skeleton Loading State -->
+      <!-- Skeleton Loading State - Hidden when forms are shown -->
       <div class="skeleton-container" *ngIf="isLoading">
         <app-skeleton-loader type="title" width="150px" height="30px"></app-skeleton-loader>
         <div class="form-group" *ngFor="let i of [1, 2]">
@@ -38,8 +38,8 @@
         </div>
       </div>
 
-      <!-- Login Form -->
-      <form *ngIf="isLogin" [formGroup]="loginForm" (ngSubmit)="onLoginSubmit()" class="auth-form">
+      <!-- Login Form - hide when skeleton loader is showing -->
+      <form *ngIf="isLogin && !isLoading" [formGroup]="loginForm" (ngSubmit)="onLoginSubmit()" class="auth-form">
         <h2>Log in to your account</h2>
 
         <div class="form-group">
@@ -101,8 +101,8 @@
         </div>
       </form>
 
-      <!-- Register Form -->
-      <form *ngIf="!isLogin" [formGroup]="registerForm" (ngSubmit)="onRegisterSubmit()" class="auth-form">
+      <!-- Register Form - hide when skeleton loader is showing -->
+      <form *ngIf="!isLogin && !isLoading" [formGroup]="registerForm" (ngSubmit)="onRegisterSubmit()" class="auth-form">
         <h2>Create a new account</h2>
 
         <div class="form-group">

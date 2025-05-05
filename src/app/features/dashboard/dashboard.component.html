@@ -4,7 +4,7 @@
   <div class="dashboard-header">
     <div class="welcome-section">
       <h1>Dashboard</h1>
-      <p *ngIf="authService.getCurrentUser()">Welcome back, {{ authService.getCurrentUser()?.fullName }}</p>
+      <p *ngIf="authService.getCurrentUser()">Welcome back, {{ authService.getCurrentUser()?.full_name }}</p>
     </div>
     <div class="actions">
       <button class="btn-secondary get-started-btn" (click)="showOnboardingModal()">

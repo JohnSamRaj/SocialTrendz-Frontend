@@ -53,7 +53,7 @@ export class ProfileComponent implements OnInit {
       if (this.user) {
         // Populate form with user data
         this.profileForm.patchValue({
-          fullName: this.user.fullName,
+          fullName: this.user.full_name,
           email: this.user.email,
           // Additional profile fields would be populated here
           bio: 'Digital marketer and content creator',
@@ -84,7 +84,7 @@ export class ProfileComponent implements OnInit {
       
       // Update local user data
       if (this.user) {
-        this.user.fullName = this.profileForm.value.fullName;
+        this.user.full_name = this.profileForm.value.fullName;
         // Other fields would be updated in a real implementation
       }
       

@@ -398,6 +398,14 @@
   flex-direction: column;
   gap: 1.5rem;
   width: 100%;
+  position: absolute;
+  background-color: #fff;
+  z-index: 5;
+  min-height: 100%;
+  /* Hide login/register forms when skeleton is showing */
+  top: 0;
+  left: 0;
+  right: 0;
 }
 
 .skeleton-container .form-group {

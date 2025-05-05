@@ -153,7 +153,7 @@ export class AuthComponent implements OnInit {
     this.successMessage = '';
   
     this.authService.register({
-      fullName: this.registerForm.value.fullName,
+      full_name: this.registerForm.value.fullName,
       email: this.registerForm.value.email,
       password: this.registerForm.value.password
     }).subscribe({

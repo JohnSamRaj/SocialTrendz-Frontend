@@ -6,7 +6,7 @@ export enum AuthProvider {
 
 export interface User {
   id?: number;
-  fullName: string;
+  full_name: string;
   email: string;
   profilePicture?: string;
   createdAt?: Date;
@@ -23,7 +23,7 @@ export interface AuthCredentials {
 }
 
 export interface RegisterCredentials extends AuthCredentials {
-  fullName: string;
+  full_name: string;
 }
 
 export interface OAuthCredentials {
@@ -31,6 +31,6 @@ export interface OAuthCredentials {
   accessToken: string;
   provider: AuthProvider;
   email?: string;
-  fullName?: string;
+  full_name?: string;
   profilePicture?: string;
 }
