@@ -591,7 +591,6 @@
   
   .dropdown-arrow {
     position: static !important;
-    margin-left: auto !important;
   }
   
   /* Fix Create Post button to show full width */
@@ -697,7 +696,6 @@
     display: inline-block !important;
     opacity: 1 !important;
     visibility: visible !important;
-    margin-left: auto !important;
   }
   
   .sidebar-header {

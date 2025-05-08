@@ -16,6 +16,50 @@
   padding-top: 60px; /* Add padding to move content down from the header */
 }
 
+/* Loading Overlay */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  border-radius: 10px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(241, 79, 10, 0.3);
+  border-radius: 50%;
+  border-top: 4px solid #F14F0A;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error Container */
+.error-container {
+  text-align: center;
+  padding: 20px;
+  margin: 10px 0;
+}
+
+.error-text {
+  color: #d9534f;
+  font-size: 16px;
+  margin-bottom: 15px;
+}
+
 .modal-backdrop.active {
   opacity: 1;
   visibility: visible;
@@ -23,12 +67,12 @@
 
 .onboarding-modal {
   background-color: #fff;
-  border-radius: 8px;
+  border-radius: 10px; /* Slightly increased radius for modern look */
   width: 90%;
   max-width: 600px;
   height: auto;
   max-height: none;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25); /* Enhanced shadow for better visibility */
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -39,8 +83,9 @@
   opacity: 0;
   transition: opacity 0.3s ease, transform 0.3s ease;
   margin-top: 0;
-  z-index: 1010;
+  z-index: 1100; /* Higher z-index to ensure it appears above all content */
   overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.05); /* Subtle border for definition */
 }
 
 .exit-button {
@@ -411,11 +456,20 @@
 .question-content h3 {
   font-size: 17px;
   color: #333;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
   text-align: left;
 }
 
-.mcq-options {
+.question-description {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 15px;
+  text-align: left;
+  font-style: italic;
+}
+
+.mcq-options, 
+.multiple-answer-options {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -443,9 +497,11 @@
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.option input[type="radio"] {
+.option input[type="radio"],
+.option input[type="checkbox"] {
   margin: 0;
   width: 20px;
+  height: 20px;
   cursor: pointer;
 }
 
@@ -457,9 +513,35 @@
 }
 
 /* Selected option styling */
-.option input[type="radio"]:checked + label {
+.option input[type="radio"]:checked + label,
+.option input[type="checkbox"]:checked + label {
   color: #F14F0A;
   font-weight: 500;
+}
+
+/* Selected option styling */
+.option.selected {
+  border-color: #F14F0A;
+  background-color: #fff5f0;
+}
+
+/* Style for form-check elements */
+.form-check {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.form-check-input {
+  margin: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.form-check-label {
+  flex: 1;
+  margin-left: 8px;
+  cursor: pointer;
 }
 
 .open-ended {
@@ -696,14 +778,18 @@ textarea:focus {
     top: 50%;
     left: 50%;
     margin-top: 0; /* Centered vertically */
+    position: fixed; /* Ensure absolute positioning works correctly */
+    z-index: 1100; /* Higher z-index to ensure modal appears above other elements */
   }
 
   .onboarding-modal.active {
     transform: translate(-50%, -50%);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25); /* Enhanced shadow for better visibility */
   }
 
   .onboarding-content {
-    padding: 25px;
+    padding: 22px;
+    max-height: calc(100vh - 200px); /* Ensure content doesn't overflow viewport */
   }
   
   /* Optimize content to fit without scrolling */
@@ -712,11 +798,13 @@ textarea:focus {
   .onboarding-outro {
     padding-right: 0;
     padding-bottom: 10px;
+    height: auto;
   }
   
   /* Make options more compact */
   .mcq-options {
     gap: 6px;
+    margin-bottom: 15px;
   }
   
   .option {
@@ -724,16 +812,39 @@ textarea:focus {
   }
   
   .questionnaire .progress-bar {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
   }
   
   .question-counter {
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
   
+  /* Button alignment fixes */
   .action-buttons {
     margin-top: 15px;
     margin-bottom: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  /* Better alignment of questionnaire buttons */
+  .questionnaire-buttons {
+    justify-content: space-between;
+    width: 100%;
+    gap: 8px;
+  }
+  
+  /* Ensure consistent button sizes */
+  .questionnaire-buttons .btn-back,
+  .questionnaire-buttons .btn-skip {
+    flex: 1;
+    max-width: 120px;
+  }
+  
+  .questionnaire-buttons .btn-next {
+    flex: 1;
+    max-width: 140px;
   }
 }
 
@@ -747,10 +858,18 @@ textarea:focus {
     top: 50%;
     left: 50%;
     margin-top: 0; /* Centered vertically */
+    position: fixed; /* Ensure absolute positioning works correctly */
+    z-index: 1100; /* Higher z-index to ensure modal appears above other elements */
   }
 
   .onboarding-modal.active {
     transform: translate(-50%, -50%);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); /* Enhanced shadow for better visibility */
+  }
+  
+  .onboarding-content {
+    padding: 20px;
+    max-height: calc(100vh - 180px); /* Ensure content doesn't overflow viewport */
   }
   
   /* Optimize content to fit without scrolling */
@@ -759,11 +878,13 @@ textarea:focus {
   .onboarding-outro {
     padding-right: 0;
     padding-bottom: 10px;
+    height: auto;
   }
   
   /* Make options more compact */
   .mcq-options {
     gap: 6px;
+    margin-bottom: 15px;
   }
   
   .option {
@@ -771,16 +892,39 @@ textarea:focus {
   }
   
   .questionnaire .progress-bar {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
   }
   
   .question-counter {
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
   
+  /* Button alignment fixes */
   .action-buttons {
     margin-top: 15px;
     margin-bottom: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  /* Better alignment of questionnaire buttons */
+  .questionnaire-buttons {
+    justify-content: space-between;
+    width: 100%;
+    gap: 8px;
+  }
+  
+  /* Ensure consistent button sizes */
+  .questionnaire-buttons .btn-back,
+  .questionnaire-buttons .btn-skip {
+    flex: 1;
+    max-width: 110px;
+  }
+  
+  .questionnaire-buttons .btn-next {
+    flex: 1;
+    max-width: 130px;
   }
 }
 
@@ -922,7 +1066,7 @@ textarea:focus {
   }
 }
 
-/* iPhone SE and similar small phones (375x667) */
+/* iPhone SE and similar small phones */
 @media (max-width: 375px) {
   .onboarding-modal {
     width: 95%;
@@ -938,7 +1082,7 @@ textarea:focus {
   .onboarding-modal.active {
     transform: translate(-50%, -50%);
   }
-
+  
   .exit-button {
     top: 5px;
     right: 5px;
@@ -1017,9 +1161,16 @@ textarea:focus {
   .question-content h3 {
     font-size: 14px;
     margin-bottom: 8px;
+    line-height: 1.4;
+  }
+  
+  .question-description {
+    font-size: 12px;
+    margin-bottom: 12px;
   }
 
-  .mcq-options {
+  .mcq-options, 
+  .multiple-answer-options {
     gap: 4px;
   }
 
@@ -1033,7 +1184,9 @@ textarea:focus {
     padding: 2px;
   }
 
-  .option input[type="radio"] {
+  .option input[type="radio"],
+  .option input[type="checkbox"],
+  .form-check-input {
     width: 16px;
     height: 16px;
   }
@@ -1050,5 +1203,10 @@ textarea:focus {
 
   textarea {
     min-height: 60px;
+  }
+  
+  /* Improve touch targets for form elements */
+  .form-check-label {
+    font-size: 12px;
   }
 }

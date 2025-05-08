@@ -3,8 +3,21 @@
     <button class="exit-button" aria-label="Close onboarding" (click)="skipAll()">
       <i class="fas fa-times"></i>
     </button>
+    
+    <!-- Loading indicator -->
+    <div *ngIf="isLoading" class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Loading...</p>
+    </div>
+    
+    <!-- Error message -->
+    <div *ngIf="errorMessage" class="error-container">
+      <p class="error-text">{{ errorMessage }}</p>
+      <button type="button" class="btn-primary" (click)="loadQuestionsFromService()">Try Again</button>
+    </div>
+    
     <!-- Intro screen -->
-    <div *ngIf="showIntro" class="onboarding-intro">
+    <div *ngIf="showIntro && !errorMessage && !isLoading" class="onboarding-intro">
       <h2>Welcome to SocialTrendz!</h2>
       <p>Let's personalize your experience with a few quick questions.</p>
       <p class="info-text">This helps us tailor our recommendations to your specific needs.</p>
@@ -16,7 +29,7 @@
     </div>
     
     <!-- Questionnaire -->
-    <div *ngIf="!showIntro && !showOutro" class="questionnaire">
+    <div *ngIf="!showIntro && !showOutro && !errorMessage && !isLoading" class="questionnaire">
       <div class="progress-bar">
         <div class="progress" [style.width.%]="progress"></div>
       </div>
@@ -27,33 +40,60 @@
       </div>
       
       <div class="question-content">
-        <h3>{{ currentQuestion.question }}</h3>
+        <h3>{{ currentQuestion.text }}</h3>
+        <p *ngIf="currentQuestion.description" class="question-description">{{ currentQuestion.description }}</p>
         
         <form [formGroup]="currentForm">
-          <!-- MCQ Question -->
-          <div *ngIf="currentQuestion.type === 'mcq'" class="mcq-options">
+          <!-- Multiple Choice Question -->
+          <div *ngIf="currentQuestion.type === QuestionType.MULTIPLE_CHOICE" class="mcq-options">
             <div *ngFor="let option of currentQuestion.options" 
                  class="option" 
-                 (click)="selectOption(option)">
+                 [class.selected]="isOptionSelected(option.id)"
+                 (click)="selectOption(option.id)">
               <input 
                 type="radio" 
-                [id]="'option-' + option" 
-                formControlName="answer"
-                [value]="option"
+                [id]="'option-' + option.id" 
+                formControlName="selectedOptionId"
+                [value]="option.id"
               >
-              <label [for]="'option-' + option">{{ option }}</label>
+              <label [for]="'option-' + option.id">{{ option.text }}</label>
+            </div>
+            
+            <div *ngIf="currentForm.get('selectedOptionId')?.invalid && currentForm.get('selectedOptionId')?.touched" class="error-message">
+              Please select an option to continue.
             </div>
           </div>
           
-          <!-- Open-ended Question -->
-          <div *ngIf="currentQuestion.type === 'open-ended'" class="open-ended">
+          <!-- Multiple Answer Question -->
+          <div *ngIf="currentQuestion.type === QuestionType.MULTIPLE_ANSWER" class="multiple-answer-options">
+            <div *ngFor="let option of currentQuestion.options; let i = index" 
+                 class="option checkbox-option" 
+                 (click)="toggleOptionSelection(i)">
+              <div class="form-check">
+                <input 
+                  type="checkbox" 
+                  [id]="'option-' + option.id"
+                  [checked]="getOptionsArray(currentForm).at(i).get('selected')?.value"
+                  class="form-check-input"
+                >
+                <label [for]="'option-' + option.id" class="form-check-label">{{ option.text }}</label>
+              </div>
+            </div>
+            
+            <div *ngIf="currentForm.get('hasSelection')?.invalid && currentForm.get('hasSelection')?.touched" class="error-message">
+              Please select at least one option to continue.
+            </div>
+          </div>
+          
+          <!-- Text Question -->
+          <div *ngIf="currentQuestion.type === QuestionType.TEXT" class="open-ended">
             <textarea 
-              formControlName="answer" 
+              formControlName="textAnswer" 
               rows="4" 
               placeholder="Type your answer here..."
             ></textarea>
             
-            <div *ngIf="currentForm.get('answer')?.invalid && currentForm.get('answer')?.touched" class="error-message">
+            <div *ngIf="currentForm.get('textAnswer')?.invalid && currentForm.get('textAnswer')?.touched" class="error-message">
               Please provide an answer to continue.
             </div>
           </div>
@@ -70,7 +110,7 @@
     </div>
     
     <!-- Outro screen -->
-    <div *ngIf="showOutro" class="onboarding-outro">
+    <div *ngIf="showOutro && !errorMessage && !isLoading" class="onboarding-outro">
       <h2>Thank You!</h2>
       <p>We've collected all the information we need to get you started.</p>
       <p class="info-text">Your personalized dashboard is ready!</p>

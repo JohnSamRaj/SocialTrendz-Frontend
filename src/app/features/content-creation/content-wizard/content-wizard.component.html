@@ -1,0 +1,213 @@
+<div class="wizard-overlay" *ngIf="isOpen" (click)="closeWizard()">
+  <div class="wizard-container" (click)="$event.stopPropagation()">
+    <!-- Wizard Header -->
+    <div class="wizard-header">
+      <h2>Content Wizard</h2>
+      <button class="close-btn" (click)="closeWizard()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="wizard-progress">
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width]="(currentStep / totalSteps * 100) + '%'"></div>
+      </div>
+      <div class="progress-steps">
+        <span>Step {{ currentStep }} of {{ totalSteps }}</span>
+      </div>
+    </div>
+
+    <!-- Step 1: Basic Information -->
+    <div class="wizard-step" *ngIf="currentStep === 1">
+      <h3>Basic Information</h3>
+      <p>Let's start with some basic information about your content.</p>
+
+      <div class="form-group">
+        <label for="group">Group/Category</label>
+        <select id="group" name="group" [(ngModel)]="wizardData.group" required>
+          <option value="" disabled>Select a group</option>
+          <option *ngFor="let group of groups" [value]="group">{{ group }}</option>
+        </select>
+      </div>
+
+      <div class="form-group" *ngIf="wizardData.group">
+        <label for="subGroup">Sub-group</label>
+        <select id="subGroup" name="subGroup" [(ngModel)]="wizardData.subGroup" required>
+          <option value="" disabled>Select a sub-group</option>
+          <option *ngFor="let subGroup of getSubGroups()" [value]="subGroup">{{ subGroup }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="businessType">Business Type</label>
+        <input 
+          type="text" 
+          id="businessType" 
+          name="businessType" 
+          [(ngModel)]="wizardData.businessInfo.businessType"
+          placeholder="e.g., Makeup Studio, Retail Store"
+          required
+        >
+      </div>
+    </div>
+
+    <!-- Step 2: Content Details -->
+    <div class="wizard-step" *ngIf="currentStep === 2">
+      <h3>Content Details</h3>
+      <p>Now, let's specify what type of content you want to create.</p>
+
+      <div class="form-group">
+        <label for="platform">Platform</label>
+        <select id="platform" name="platform" [(ngModel)]="wizardData.platform" required>
+          <option *ngFor="let platform of platforms" [value]="platform">{{ platform }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="contentType">Content Type</label>
+        <select id="contentType" name="contentType" [(ngModel)]="wizardData.contentType" required>
+          <option *ngFor="let type of getContentTypes()" [value]="type">{{ type }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="niche">Niche</label>
+        <input 
+          type="text" 
+          id="niche" 
+          name="niche" 
+          [(ngModel)]="wizardData.niche"
+          placeholder="e.g., Makeup Tutorials, Fashion Tips"
+          required
+        >
+      </div>
+    </div>
+
+    <!-- Step 3: Audience & Tone -->
+    <div class="wizard-step" *ngIf="currentStep === 3">
+      <h3>Audience & Tone</h3>
+      <p>Define your target audience and content style.</p>
+
+      <div class="form-group">
+        <label for="audience">Target Audience</label>
+        <textarea 
+          id="audience" 
+          name="audience" 
+          [(ngModel)]="wizardData.audience"
+          placeholder="e.g., Young women aged 18-30 interested in beauty"
+          rows="3"
+          required
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="tone">Content Tone</label>
+        <select id="tone" name="tone" [(ngModel)]="wizardData.tone" required>
+          <option *ngFor="let tone of tones" [value]="tone">{{ tone }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="goal">Content Goal</label>
+        <select id="goal" name="goal" [(ngModel)]="wizardData.goal" required>
+          <option *ngFor="let goal of goals" [value]="goal">{{ goal }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Step 4: Final Details -->
+    <div class="wizard-step" *ngIf="currentStep === 4">
+      <h3>Final Details</h3>
+      <p>Just a few more details to help create your content.</p>
+
+      <div class="form-group">
+        <label for="mainTopic">Main Topic</label>
+        <textarea 
+          id="mainTopic" 
+          name="mainTopic" 
+          [(ngModel)]="wizardData.mainTopic"
+          placeholder="e.g., Smokey eye look for parties"
+          rows="3"
+          required
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Services Offered</label>
+        <div class="services-container">
+          <div class="services-input">
+            <input 
+              type="text" 
+              id="newService" 
+              name="newService" 
+              [(ngModel)]="newService"
+              placeholder="e.g., bridal makeup"
+            >
+            <button type="button" class="add-service-btn" (click)="addService()">
+              <i class="fas fa-plus"></i>
+            </button>
+          </div>
+          <div class="services-list" *ngIf="wizardData.businessInfo.services.length > 0">
+            <div class="service-tag" *ngFor="let service of wizardData.businessInfo.services; let i = index">
+              {{ service }}
+              <button type="button" class="remove-service-btn" (click)="removeService(i)">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="toggle-label">
+          <span>Generate</span>
+          <div class="toggle-switch">
+            <input 
+              type="checkbox" 
+              id="generateImage" 
+              name="generateImage" 
+              [(ngModel)]="wizardData.generateImage"
+            >
+            <span class="toggle-slider"></span>
+          </div>
+          <span>{{ wizardData.generateImage ? 'Image' : 'Text Content' }}</span>
+        </label>
+        <p class="toggle-description">
+          {{ wizardData.generateImage ? 
+            'Generate an AI image based on your inputs' : 
+            'Generate text content (caption and hashtags) based on your inputs' }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Wizard Footer -->
+    <div class="wizard-footer">
+      <button 
+        class="btn btn-secondary" 
+        *ngIf="currentStep > 1" 
+        (click)="prevStep()"
+      >
+        <i class="fas fa-arrow-left"></i> Back
+      </button>
+      
+      <button 
+        class="btn btn-primary" 
+        *ngIf="currentStep < totalSteps" 
+        (click)="nextStep()"
+        [disabled]="!canProceed()"
+      >
+        Next <i class="fas fa-arrow-right"></i>
+      </button>
+
+      <button 
+        class="btn btn-success" 
+        *ngIf="currentStep === totalSteps" 
+        (click)="submitWizard()"
+        [disabled]="!canSubmit()"
+      >
+        Generate Content <i class="fas fa-magic"></i>
+      </button>
+    </div>
+  </div>
+</div> 

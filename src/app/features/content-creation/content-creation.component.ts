@@ -12,6 +12,7 @@ import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader
 import { ConnectedAccountsService } from '../../core/services/connected-accounts.service';
 import { PlatformInfo, ConnectedAccount } from '../../core/models/connected-account.model';
 import { LazyLoadImageDirective } from '../../shared/directives/lazy-load-image.directive';
+import { ContentWizardComponent, ContentWizardData } from './content-wizard/content-wizard.component';
 
 @Component({
   selector: 'app-content-creation',
@@ -23,7 +24,8 @@ import { LazyLoadImageDirective } from '../../shared/directives/lazy-load-image.
     PostCardComponent,
     InstagramPreviewComponent,
     SkeletonLoaderComponent,
-    LazyLoadImageDirective
+    LazyLoadImageDirective,
+    ContentWizardComponent
   ],
   templateUrl: './content-creation.component.html',
   styleUrls: ['./content-creation.component.css'],
@@ -87,6 +89,9 @@ export class ContentCreationComponent implements OnInit {
   isLoading = false;
   isSaving = false;
   error: string | null = null;
+  
+  // Content Wizard state
+  isContentWizardOpen = false;
   
   constructor(
     private instagramService: InstagramService,
@@ -750,5 +755,84 @@ export class ContentCreationComponent implements OnInit {
         console.error('Error publishing post:', err);
       }
     });
+  }
+  
+  /**
+   * Open the content wizard
+   */
+  openContentWizard(): void {
+    this.isContentWizardOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Close the content wizard
+   */
+  closeContentWizard(): void {
+    this.isContentWizardOpen = false;
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Handle content wizard submission
+   */
+  handleContentWizardSubmit(data: ContentWizardData): void {
+    // Update the post data based on wizard input
+    this.newPost.platform = data.platform.toLowerCase() as any;
+    this.newPost.type = data.generateImage ? PostType.IMAGE : PostType.IMAGE; // Default to IMAGE type since TEXT is not available
+    
+    // Set caption based on the wizard data
+    const caption = this.generateCaptionFromWizardData(data);
+    this.newPost.caption = caption;
+    
+    // Set hashtags based on the wizard data
+    const hashtags = this.generateHashtagsFromWizardData(data);
+    this.newPost.hashtags = hashtags;
+    
+    // Close the wizard
+    this.closeContentWizard();
+    
+    // Show success message
+    this.toastService.show('Content generated successfully!', 'success');
+    
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Generate caption from wizard data
+   */
+  private generateCaptionFromWizardData(data: ContentWizardData): string {
+    // This is a simple example - you can make this more sophisticated
+    return `${data.mainTopic}\n\n` +
+           `🎯 Goal: ${data.goal}\n` +
+           `🎨 Tone: ${data.tone}\n` +
+           `👥 For: ${data.audience}\n\n` +
+           `#${data.niche.replace(/\s+/g, '')} #${data.group.toLowerCase()}`;
+  }
+
+  /**
+   * Generate hashtags from wizard data
+   */
+  private generateHashtagsFromWizardData(data: ContentWizardData): string[] {
+    const hashtags = [
+      data.niche.replace(/\s+/g, ''),
+      data.group.toLowerCase(),
+      data.subGroup.replace(/\s+/g, ''),
+      data.platform.toLowerCase(),
+      data.contentType.toLowerCase()
+    ];
+
+    // Add business-specific hashtags
+    if (data.businessInfo.businessType) {
+      hashtags.push(data.businessInfo.businessType.replace(/\s+/g, ''));
+    }
+
+    // Add service-specific hashtags
+    data.businessInfo.services.forEach(service => {
+      hashtags.push(service.replace(/\s+/g, ''));
+    });
+
+    // Remove duplicates and limit to 30 hashtags
+    return [...new Set(hashtags)].slice(0, 30);
   }
 }

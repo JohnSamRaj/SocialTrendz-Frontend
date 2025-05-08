@@ -46,7 +46,12 @@ export class ForgotPasswordComponent implements OnInit {
     });
     
     this.otpForm = this.fb.group({
-      otp: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]]
+      digit1: ['', [Validators.required]],
+      digit2: ['', [Validators.required]],
+      digit3: ['', [Validators.required]],
+      digit4: ['', [Validators.required]],
+      digit5: ['', [Validators.required]],
+      digit6: ['', [Validators.required]]
     });
     
     this.resetPasswordForm = this.fb.group({
@@ -97,6 +102,68 @@ export class ForgotPasswordComponent implements OnInit {
     });
   }
   
+  // OTP input handling
+  onDigitInput(event: Event, nextInput?: any, prevInput?: any): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    
+    // Auto-navigate to next input when a digit is entered
+    if (value.length === 1 && nextInput) {
+      nextInput.focus();
+    }
+    
+    // If value is cleared and there's a previous input, focus on it
+    if (value.length === 0 && prevInput) {
+      prevInput.focus();
+    }
+    
+    this.checkOtpCompletion();
+  }
+  
+  // Handle keydown events
+  onKeyDown(event: KeyboardEvent, prevInput?: any): void {
+    // If backspace and empty, focus on previous input
+    if (event.key === 'Backspace' && (event.target as HTMLInputElement).value === '' && prevInput) {
+      prevInput.focus();
+    }
+  }
+  
+  // Check if all OTP digits are filled
+  private checkOtpCompletion(): void {
+    if (this.otpForm.valid) {
+      // Form is complete
+      this.toastService.info('Verification code entered. Click Verify to continue.');
+    }
+  }
+  
+  // Resend OTP functionality
+  resendTimer = 0;
+  resendOtp(): void {
+    if (this.resendTimer > 0) return;
+    
+    this.isLoading = true;
+    this.authService.requestPasswordReset(this.userEmail).subscribe({
+      next: () => {
+        this.isLoading = false;
+        this.toastService.success('A new verification code has been sent to your email!');
+        
+        // Start resend timer (60 second countdown)
+        this.resendTimer = 60;
+        const interval = setInterval(() => {
+          this.resendTimer--;
+          if (this.resendTimer <= 0) {
+            clearInterval(interval);
+          }
+        }, 1000);
+      },
+      error: (error: Error) => {
+        this.isLoading = false;
+        this.errorMessage = error.message || 'Failed to resend verification code. Please try again.';
+        this.toastService.error('Failed to resend verification code.');
+      }
+    });
+  }
+  
   // Handle OTP form submission
   onOtpSubmit(): void {
     if (this.otpForm.invalid) {
@@ -106,7 +173,16 @@ export class ForgotPasswordComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
     
-    this.authService.verifyPasswordResetOTP(this.userEmail, this.otpForm.value.otp).subscribe({
+    // Combine all digits into a single OTP string
+    const otp = 
+      this.otpForm.value.digit1 +
+      this.otpForm.value.digit2 +
+      this.otpForm.value.digit3 +
+      this.otpForm.value.digit4 +
+      this.otpForm.value.digit5 +
+      this.otpForm.value.digit6;
+    
+    this.authService.verifyPasswordResetOTP(this.userEmail, otp).subscribe({
       next: () => {
         this.isLoading = false;
         this.currentStep = 3; // Move to reset password

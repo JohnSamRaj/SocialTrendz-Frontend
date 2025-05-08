@@ -829,3 +829,62 @@
     justify-content: center;
   }
 }
+
+/* Content Wizard Button */
+.content-wizard-btn {
+  margin: 20px 0;
+  padding: 12px 24px;
+  background-color: var(--color-primary, #F14F0A);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.content-wizard-btn:hover {
+  background-color: var(--color-secondary, #FF8C66);
+  transform: translateY(-1px);
+}
+
+.content-wizard-btn i {
+  font-size: 1.1rem;
+}
+
+/* Tabs row with wizard button */
+.content-tabs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-lg);
+  gap: var(--spacing-md);
+}
+
+.content-wizard-btn-wrapper {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+/* Responsive: stack button below tabs on small screens */
+@media (max-width: 650px) {
+  .content-tabs-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+  }
+  .content-wizard-btn-wrapper {
+    margin-left: 0;
+    justify-content: flex-end;
+    margin-top: var(--spacing-sm);
+  }
+  .content-wizard-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

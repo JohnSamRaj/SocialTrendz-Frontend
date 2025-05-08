@@ -4,22 +4,31 @@
     <p>Create and manage your Instagram content</p>
   </div>
 
-  <!-- Tab Navigation -->
-  <div class="content-tabs">
-    <button 
-      class="tab-button" 
-      [class.active]="currentTab === 'create'"
-      (click)="switchTab('create')"
-    >
-      <i class="fas fa-plus"></i> Create Content
-    </button>
-    <button 
-      class="tab-button" 
-      [class.active]="currentTab === 'drafts'"
-      (click)="switchTab('drafts')"
-    >
-      <i class="fas fa-save"></i> My Drafts
-    </button>
+  <!-- Tab Navigation and Content Wizard Button Row -->
+  <div class="content-tabs-row">
+    <div class="content-tabs">
+      <button 
+        class="tab-button" 
+        [class.active]="currentTab === 'create'"
+        (click)="switchTab('create')"
+      >
+        <i class="fas fa-plus"></i> Create Content
+      </button>
+      <button 
+        class="tab-button" 
+        [class.active]="currentTab === 'drafts'"
+        (click)="switchTab('drafts')"
+      >
+        <i class="fas fa-save"></i> My Drafts
+      </button>
+    </div>
+    <div class="content-wizard-btn-wrapper">
+      <button 
+        class="btn btn-primary content-wizard-btn" 
+        (click)="openContentWizard()">
+        <i class="fas fa-magic"></i> Use Content Wizard
+      </button>
+    </div>
   </div>
 
   <!-- Error Message -->
@@ -65,10 +74,16 @@
     </div>
   </div>
 
+  <!-- Content Wizard -->
+  <app-content-wizard
+    [isOpen]="isContentWizardOpen"
+    (close)="closeContentWizard()"
+    (submit)="handleContentWizardSubmit($event)"
+  ></app-content-wizard>
+
   <!-- Create Content Tab -->
   <div class="create-content" *ngIf="currentTab === 'create' && !isLoading">
     <div class="content-form">
-      <!-- Instagram Preview -->
       <div class="form-section post-preview-section">
         <h3>Post Preview</h3>
         <app-instagram-preview
