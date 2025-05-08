@@ -121,8 +121,18 @@
   position: sticky;
   top: 20px;
   align-self: flex-start;
-  max-height: calc(100vh - 100px);
-  overflow-y: auto;
+  height: fit-content;
+  padding: var(--spacing-md);
+  background: #fff;
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.post-preview-section::-webkit-scrollbar,
+.post-preview-section::-webkit-scrollbar-track,
+.post-preview-section::-webkit-scrollbar-thumb,
+.post-preview-section::-webkit-scrollbar-thumb:hover {
+  display: none;
 }
 
 /* Media upload takes the first column */
@@ -800,33 +810,31 @@
   margin-bottom: var(--spacing-lg);
 }
 
+@media (max-width: 1200px) {
+  .content-form {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+  .post-preview-section {
+    grid-column: 1;
+    position: relative;
+    top: 0;
+  }
+}
+
 @media (max-width: 768px) {
   .content-form {
     grid-template-columns: 1fr;
   }
-  
   .post-preview-section {
-    grid-column: 1;
-    grid-row: 1;
-    position: relative;
-    top: 0;
-    max-height: none;
+    padding: var(--spacing-sm);
   }
-  
-  .form-section:not(.post-preview-section) {
-    grid-column: 1;
-  }
-  
-  .schedule-inputs {
-    flex-direction: column;
-  }
-  
-  .action-buttons {
-    flex-direction: column;
-  }
-  
-  .media-items {
-    justify-content: center;
+}
+
+@media (max-width: 480px) {
+  .post-preview-section {
+    margin: 0 calc(-1 * var(--spacing-md));
+    border-radius: 0;
   }
 }
 

@@ -14,9 +14,9 @@ export interface ContentWizardData {
   goal: string;
   mainTopic: string;
   generateImage: boolean;
+  generateText: boolean;
   businessInfo: {
     businessType: string;
-    services: string[];
   };
 }
 
@@ -47,28 +47,27 @@ export class ContentWizardComponent implements OnInit {
     tone: 'Fun and Bold',
     goal: 'Increase followers',
     mainTopic: '',
-    generateImage: false,
+    generateImage: true,
+    generateText: true,
     businessInfo: {
-      businessType: '',
-      services: []
+      businessType: ''
     }
   };
 
-  // Service input field
-  newService = '';
-
   // Form options
-  groups = ['Fashion', 'Beauty', 'Technology', 'Food', 'Travel', 'Fitness', 'Education', 'Other'];
+  groups = ['Fashion','Other'];
   
-  subGroups: { [key: string]: string[] } = {
-    'Fashion': ['Fashion Designer', 'Fashion Blogger', 'Model', 'Stylist', 'Retail Brand'],
-    'Beauty': ['Makeup Artist', 'Hair Stylist', 'Skincare Expert', 'Nail Technician', 'Beauty Blogger'],
-    'Technology': ['Software Developer', 'Tech Reviewer', 'IT Consultant', 'Gadget Enthusiast', 'Tech Startup'],
-    'Food': ['Chef', 'Food Blogger', 'Restaurant', 'Bakery', 'Nutritionist'],
-    'Travel': ['Travel Blogger', 'Tour Guide', 'Travel Agency', 'Adventure Photographer', 'Hotel'],
-    'Fitness': ['Fitness Trainer', 'Yoga Instructor', 'Gym Owner', 'Nutritionist', 'Sports Coach'],
-    'Education': ['Teacher', 'Online Course Creator', 'Tutor', 'Educational Institution', 'Educational Content Creator'],
-    'Other': ['Other']
+  subGroups: { [key: string]: { label: string, value: string }[] } = {
+    'Fashion': [
+      { label: 'Fashion Designer', value: 'fashion-designer' },
+      { label: 'Fashion Blogger', value: 'fashion-blogger' },
+      { label: 'Makeup Artist', value: 'makeup-artist' },
+      { label: 'Hair Stylist', value: 'hair-stylist' },
+      { label: 'Retail Brand', value: 'retail-brand' }
+    ],
+    'Other': [
+      { label: 'Other', value: 'other' }
+    ]
   };
   
   platforms = ['Instagram', 'Facebook', 'Twitter', 'LinkedIn', 'TikTok', 'Pinterest', 'YouTube'];
@@ -146,19 +145,6 @@ export class ContentWizardComponent implements OnInit {
     return !!this.wizardData.mainTopic;
   }
 
-  // Add a new service to the services array
-  addService(): void {
-    if (this.newService.trim()) {
-      this.wizardData.businessInfo.services.push(this.newService.trim());
-      this.newService = '';
-    }
-  }
-
-  // Remove a service from the services array
-  removeService(index: number): void {
-    this.wizardData.businessInfo.services.splice(index, 1);
-  }
-
   // Submit the wizard data
   submitWizard(): void {
     this.submit.emit(this.wizardData);
@@ -171,7 +157,7 @@ export class ContentWizardComponent implements OnInit {
   }
 
   // Get available subgroups based on selected group
-  getSubGroups(): string[] {
+  getSubGroups(): { label: string, value: string }[] {
     return this.subGroups[this.wizardData.group] || [];
   }
 } 

@@ -35,7 +35,7 @@
         <label for="subGroup">Sub-group</label>
         <select id="subGroup" name="subGroup" [(ngModel)]="wizardData.subGroup" required>
           <option value="" disabled>Select a sub-group</option>
-          <option *ngFor="let subGroup of getSubGroups()" [value]="subGroup">{{ subGroup }}</option>
+          <option *ngFor="let subGroup of getSubGroups()" [value]="subGroup.value">{{ subGroup.label }}</option>
         </select>
       </div>
 
@@ -133,7 +133,7 @@
         ></textarea>
       </div>
 
-      <div class="form-group">
+      <!-- <div class="form-group">
         <label>Services Offered</label>
         <div class="services-container">
           <div class="services-input">
@@ -157,26 +157,32 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <div class="form-group">
-        <label class="toggle-label">
-          <span>Generate</span>
-          <div class="toggle-switch">
+        <label class="checkbox-label">Content Generation Options</label>
+        <div class="checkbox-options">
+          <div class="checkbox-item">
+            <input 
+              type="checkbox" 
+              id="generateText" 
+              name="generateText" 
+              [(ngModel)]="wizardData.generateText"
+            >
+            <label for="generateText">Generate Text Content</label>
+          </div>
+          <div class="checkbox-item">
             <input 
               type="checkbox" 
               id="generateImage" 
               name="generateImage" 
               [(ngModel)]="wizardData.generateImage"
             >
-            <span class="toggle-slider"></span>
+            <label for="generateImage">Generate Image</label>
           </div>
-          <span>{{ wizardData.generateImage ? 'Image' : 'Text Content' }}</span>
-        </label>
-        <p class="toggle-description">
-          {{ wizardData.generateImage ? 
-            'Generate an AI image based on your inputs' : 
-            'Generate text content (caption and hashtags) based on your inputs' }}
+        </div>
+        <p class="checkbox-description">
+          Select one or both options to generate content based on your inputs
         </p>
       </div>
     </div>

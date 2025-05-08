@@ -13,6 +13,7 @@ import { ConnectedAccountsService } from '../../core/services/connected-accounts
 import { PlatformInfo, ConnectedAccount } from '../../core/models/connected-account.model';
 import { LazyLoadImageDirective } from '../../shared/directives/lazy-load-image.directive';
 import { ContentWizardComponent, ContentWizardData } from './content-wizard/content-wizard.component';
+import { ApiService } from '../../core/services/api.service';
 
 @Component({
   selector: 'app-content-creation',
@@ -99,7 +100,8 @@ export class ContentCreationComponent implements OnInit {
     private route: ActivatedRoute,
     private toastService: ToastService,
     private connectedAccountsService: ConnectedAccountsService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private apiService: ApiService
   ) { 
     // Set user ID and username from service
     const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
@@ -777,62 +779,72 @@ export class ContentCreationComponent implements OnInit {
    * Handle content wizard submission
    */
   handleContentWizardSubmit(data: ContentWizardData): void {
-    // Update the post data based on wizard input
-    this.newPost.platform = data.platform.toLowerCase() as any;
-    this.newPost.type = data.generateImage ? PostType.IMAGE : PostType.IMAGE; // Default to IMAGE type since TEXT is not available
-    
-    // Set caption based on the wizard data
-    const caption = this.generateCaptionFromWizardData(data);
-    this.newPost.caption = caption;
-    
-    // Set hashtags based on the wizard data
-    const hashtags = this.generateHashtagsFromWizardData(data);
-    this.newPost.hashtags = hashtags;
-    
-    // Close the wizard
-    this.closeContentWizard();
-    
-    // Show success message
-    this.toastService.show('Content generated successfully!', 'success');
-    
-    this.cdr.markForCheck();
-  }
+    this.isLoading = true;
+    this.error = null;
+    const payload = { ...data };
 
-  /**
-   * Generate caption from wizard data
-   */
-  private generateCaptionFromWizardData(data: ContentWizardData): string {
-    // This is a simple example - you can make this more sophisticated
-    return `${data.mainTopic}\n\n` +
-           `🎯 Goal: ${data.goal}\n` +
-           `🎨 Tone: ${data.tone}\n` +
-           `👥 For: ${data.audience}\n\n` +
-           `#${data.niche.replace(/\s+/g, '')} #${data.group.toLowerCase()}`;
-  }
+    // Always send the correct platform
+    payload.platform = data.platform;
 
-  /**
-   * Generate hashtags from wizard data
-   */
-  private generateHashtagsFromWizardData(data: ContentWizardData): string[] {
-    const hashtags = [
-      data.niche.replace(/\s+/g, ''),
-      data.group.toLowerCase(),
-      data.subGroup.replace(/\s+/g, ''),
-      data.platform.toLowerCase(),
-      data.contentType.toLowerCase()
-    ];
+    this.apiService.post<any>('prompt/get-content', payload).subscribe({
+      next: (response) => {
+        // 1. Extract description/caption
+        let caption = '';
+        // Try to find the first paragraph after "Content Insight and Strategy" or similar
+        const insightMatch = response.result.match(/(?:Content Insight and Strategy:|Description:|### Instagram Reel Description:|^\\d+\\.\\s*)[\\s\\S]*?(?:\\n|\\r|\\r\\n)([\\s\\S]*?)(?:\\n\\d+\\.|\\n#|\\n\\*\\*|\\n4\\.|$)/i);
+        if (insightMatch && insightMatch[1]) {
+          caption = insightMatch[1].trim();
+        } else {
+          // fallback: use the whole result
+          caption = response.result.trim();
+        }
+        this.newPost.caption = caption;
 
-    // Add business-specific hashtags
-    if (data.businessInfo.businessType) {
-      hashtags.push(data.businessInfo.businessType.replace(/\s+/g, ''));
-    }
+        // 2. Extract hashtags (look for lines with #)
+        let hashtags = '';
+        const hashtagMatch = response.result.match(/#\\w[\\w\\d_# ]+/);
+        if (hashtagMatch) {
+          hashtags = hashtagMatch[0].trim();
+        } else {
+          // fallback: look for Hashtags/Keywords section
+          const hashSection = response.result.match(/Hashtags[\\s\\S]*?#([\\w# ]+)/i);
+          if (hashSection && hashSection[1]) {
+            hashtags = hashSection[1].trim();
+          }
+        }
+        this.hashtags = hashtags;
+        this.newPost.hashtags = hashtags
+          .split(/[#\\s]+/)
+          .map(tag => tag.trim())
+          .filter(tag => tag.length > 0);
 
-    // Add service-specific hashtags
-    data.businessInfo.services.forEach(service => {
-      hashtags.push(service.replace(/\s+/g, ''));
+        // 3. Set image if present
+        if (response.imageUrl) {
+          this.newPost.mediaItems = [{
+            id: Date.now().toString(),
+            url: response.imageUrl,
+            type: 'image'
+          }];
+        } else {
+          this.newPost.mediaItems = [];
+        }
+
+        // 4. Set platform and type
+        this.newPost.platform = data.platform.toLowerCase() as any;
+        this.newPost.type = data.generateImage ? PostType.IMAGE : PostType.IMAGE;
+
+        // 5. Close wizard and update UI
+        this.closeContentWizard();
+        this.toastService.show('Content generated successfully!', 'success');
+        this.isLoading = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.error = 'Failed to generate content. Please try again.';
+        this.isLoading = false;
+        this.toastService.error(this.error);
+        this.cdr.markForCheck();
+      }
     });
-
-    // Remove duplicates and limit to 30 hashtags
-    return [...new Set(hashtags)].slice(0, 30);
   }
 }

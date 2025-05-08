@@ -5,33 +5,36 @@
  * In a real application, this would authenticate with Instagram's API.
  */
 import { Injectable } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError, of } from 'rxjs';
+import { catchError, map, retry } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { HttpXhrBackend } from '@angular/common/http';
+import { Router } from '@angular/router';
 
 /**
  * Interface for Instagram account data
  */
 interface InstagramAccount {
   id: string;
-  username: string;
-  fullName: string;
-  profilePicture: string;
-  followers: number;
-  following: number;
-  bio: string;
+  user_id: string;
+  platform: string;
+  account_id: string;
+  account_name: string;
+  profile_image_url: string;
+  access_token: string;
+  refresh_token?: string;
+  token_type: string;
+  token_expires_at: string;
+  scopes: string[];
 }
-
 /**
  * Interface for Instagram post response
  */
 interface InstagramPostResponse {
   success: boolean;
   postId: string;
-  imageUrl: string;
-  caption: string;
-  title?: string;
-  createdAt: string;
+  error?: string;
 }
 
 /**
@@ -40,36 +43,53 @@ interface InstagramPostResponse {
 interface ApiResponse {
   success: boolean;
   message: string;
-  [key: string]: any;
+  data?: any;
+  error?: string;
+}
+
+interface InstagramError {
+  error: {
+    message: string;
+    type: string;
+    code: number;
+  };
+}
+
+interface InstagramAnalytics {
+  followers: number;
+  following: number;
+  posts: number;
+  engagement: {
+    likes: number;
+    comments: number;
+    shares: number;
+  };
+  reach: {
+    total: number;
+    organic: number;
+    paid: number;
+  };
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class InstagramApiService {
-  // Connection state
-  private isConnected = false;
+  private readonly API_URL = `${environment.apiUrl}/social-accounts`;
+  private readonly TIMEOUT = 30000; // 30 seconds
   
-  // API response delays (ms)
-  private readonly SHORT_DELAY = 500;
-  private readonly MEDIUM_DELAY = 800;
-  private readonly LONG_DELAY = 1200;
-  
-  // Demo account data
-  private mockAccount: InstagramAccount = {
-    id: 'instagram123456',
-    username: 'socialtrendz_demo',
-    fullName: 'SocialTrendz Demo',
-    profilePicture: 'assets/icons/instagram-logo.svg',
-    followers: 1250,
-    following: 420,
-    bio: 'This is a mock Instagram account for demonstration purposes.'
-  };
-
-  constructor() {
-    if (!environment.production) {
-      console.log('Instagram API Service initialized in demo mode');
-    }
+  constructor(
+    private http: HttpClient,
+    private router: Router
+  ) {
+    // Add timeout to all HTTP requests
+    this.http = new HttpClient(new HttpXhrBackend({
+      build: () => {
+        const xhr = new XMLHttpRequest();
+        xhr.timeout = this.TIMEOUT;
+        return xhr;
+      }
+    }));
   }
 
   /**
@@ -77,11 +97,10 @@ export class InstagramApiService {
    * @returns Observable with auth URL
    */
   getAuthUrl(): Observable<{ url: string }> {
-    // In a real app, this would be Instagram's OAuth URL with your app's client ID
-    // e.g., https://api.instagram.com/oauth/authorize?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URI&scope=user_profile,user_media&response_type=code
-    return of({ 
-      url: 'https://example.com/mock-instagram-auth' 
-    }).pipe(delay(this.SHORT_DELAY));
+    return this.http.get<{ url: string }>(`${this.API_URL}/instagram/auth-url`)
+      .pipe(
+        catchError(this.handleError)
+      );
   }
 
   /**
@@ -89,10 +108,17 @@ export class InstagramApiService {
    * @returns Observable with connection status and account info
    */
   checkInstagramStatus(): Observable<{ connected: boolean, account?: InstagramAccount }> {
-    return of({
-      connected: this.isConnected,
-      account: this.isConnected ? this.mockAccount : undefined
-    }).pipe(delay(this.SHORT_DELAY));
+    return this.http.get<InstagramAccount[]>(`${this.API_URL}?platform=instagram`)
+      .pipe(
+        map(accounts => ({
+          connected: accounts.length > 0,
+          account: accounts[0]
+        })),
+        catchError(error => {
+          console.error('Error checking Instagram status:', error);
+          return of({ connected: false });
+        })
+      );
   }
 
   /**
@@ -103,23 +129,17 @@ export class InstagramApiService {
    * @returns Observable with post result
    */
   postToInstagram(imageUrl: string, caption: string, title?: string): Observable<InstagramPostResponse> {
-    // Verify account connection
-    if (!this.isConnected) {
-      return throwError(() => new Error('Instagram account not connected'));
+    if (!imageUrl || !caption) {
+      return throwError(() => new Error('Image URL and caption are required'));
     }
-    
-    // Generate a unique post ID for demo purposes
-    const postId = 'post_' + Date.now().toString(36);
-    
-    // Return a successful post response
-    return of({
-      success: true,
-      postId,
+
+    return this.http.post<InstagramPostResponse>(`${this.API_URL}/instagram/post`, {
       imageUrl,
       caption,
-      title,
-      createdAt: new Date().toISOString()
-    }).pipe(delay(this.MEDIUM_DELAY));
+      title
+    }).pipe(
+      catchError(this.handleError)
+    );
   }
 
   /**
@@ -127,18 +147,10 @@ export class InstagramApiService {
    * @returns Observable with disconnect result
    */
   disconnectInstagram(): Observable<ApiResponse> {
-    // Verify account connection
-    if (!this.isConnected) {
-      return throwError(() => new Error('No Instagram account connected'));
-    }
-    
-    // Update connection state
-    this.isConnected = false;
-    
-    return of({
-      success: true,
-      message: 'Instagram account disconnected successfully'
-    }).pipe(delay(this.SHORT_DELAY));
+    return this.http.delete<ApiResponse>(`${this.API_URL}/instagram`)
+      .pipe(
+        catchError(this.handleError)
+      );
   }
   
   /**
@@ -146,14 +158,54 @@ export class InstagramApiService {
    * In a real app, this would process the OAuth callback code
    * @returns Observable with connection result
    */
-  connectInstagramAccount(): Observable<ApiResponse> {
-    // Update connection state
-    this.isConnected = true;
+  connectInstagramAccount(code: string): Observable<ApiResponse> {
+    if (!code) {
+      return throwError(() => new Error('Authorization code is required'));
+    }
+
+    return this.http.post<ApiResponse>(`${this.API_URL}/instagram/connect`, { code })
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
+    // Get Instagram account details
+  getInstagramAccount(): Observable<InstagramAccount> {
+    return this.http.get<InstagramAccount>(`${this.API_URL}/instagram`)
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
+  // Refresh Instagram token
+  refreshToken(): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(`${this.API_URL}/instagram/refresh`, {})
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
+  // Get Instagram analytics
+  getAnalytics(): Observable<InstagramAnalytics> {
+    return this.http.get<InstagramAnalytics>(`${this.API_URL}/instagram/analytics`)
+      .pipe(
+        retry(3),
+        catchError(this.handleError)
+      );
+  }
+
+  private handleError(error: HttpErrorResponse): Observable<never> {
+    let errorMessage = 'An error occurred';
     
-    return of({
-      success: true,
-      message: 'Instagram account connected successfully',
-      account: this.mockAccount
-    }).pipe(delay(this.MEDIUM_DELAY));
+    if (error.error instanceof ErrorEvent) {
+      // Client-side error
+      errorMessage = error.error.message;
+    } else {
+      // Server-side error
+      errorMessage = error.error?.message || error.message || errorMessage;
+    }
+    
+    console.error('Instagram API Error:', error);
+    return throwError(() => new Error(errorMessage));
   }
 }
