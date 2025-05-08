@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { map, take } from 'rxjs/operators';
 import { ConnectedAccount, PlatformInfo } from '../../core/models/connected-account.model';
 import { PlatformConnectionService, PlatformType } from '../../core/services/platform-connection.service';
 import { SocialAccountsApiService } from '../../core/services/social-accounts-api.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { ToastService } from '../../shared/services/toast.service';
 
 @Component({
   selector: 'app-accounts-connect',
@@ -25,12 +26,20 @@ export class AccountsConnectComponent implements OnInit {
     private platformConnectionService: PlatformConnectionService,
     private socialAccountsApiService: SocialAccountsApiService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
     this.loadAvailablePlatforms();
     this.checkIfNewUser();
+    this.route.queryParams.subscribe(params => {
+      if (params['instagram_connected']) {
+        this.toastService.show('Instagram connected', 'success');
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    });
   }
 
   /**
@@ -121,43 +130,11 @@ export class AccountsConnectComponent implements OnInit {
   }
 
   /**
-   * Connect to the selected platform
-   */
-  connectPlatform(): void {
-    if (!this.selectedPlatform) {
-      return;
-    }
-
-    this.loading = true;
-    const platformId = this.selectedPlatform.id as PlatformType;
-
-    // For now, we're focusing on Instagram
-    if (platformId === 'instagram') {
-      this.connectInstagram();
-    } else {
-      this.error = `${this.selectedPlatform.name} integration is not available yet.`;
-      this.loading = false;
-    }
-  }
-
-  /**
    * Connect to Instagram by redirecting to the auth URL
    */
   connectInstagram(): void {
-    this.socialAccountsApiService.getInstagramAuthUrl()
-      .pipe(take(1))
-      .subscribe({
-        next: (authUrl) => {
-          // Redirect to the Instagram authorization URL
-          window.location.href = authUrl;
-          this.loading = false;
-        },
-        error: (err) => {
-          console.error('Error getting Instagram auth URL:', err);
-          this.error = 'Failed to connect to Instagram';
-          this.loading = false;
-        }
-      });
+    // Redirect directly to your backend's Instagram OAuth route
+    window.location.href = 'http://localhost:3000/api/auth/instagram';
   }
 
   /**

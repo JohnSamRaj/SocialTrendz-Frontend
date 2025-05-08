@@ -569,56 +569,32 @@ export class ContentCreationComponent implements OnInit {
   publishNow(): void {
     if (this.validateForm()) {
       this.isSaving = true;
-      
-      if (this.isEditing) {
-        this.instagramService.updatePost(this.editingPostId, {
-          caption: this.newPost.caption,
-          mediaItems: this.newPost.mediaItems,
-          hashtags: this.newPost.hashtags
-        }).subscribe({
-          next: (updatedPost) => {
-            this.instagramService.publishPost(updatedPost.id).subscribe({
-              next: () => {
-                this.isSaving = false;
-                this.toastService.success('Post published successfully');
-                this.resetForm();
-              },
-              error: (err) => {
-                this.error = 'Failed to publish post';
-                this.isSaving = false;
-                console.error('Error publishing post:', err);
-              }
-            });
-          },
-          error: (err) => {
-            this.error = 'Failed to update post';
-            this.isSaving = false;
-            console.error('Error updating post:', err);
-          }
-        });
-      } else {
-        this.instagramService.createPost(this.newPost).subscribe({
-          next: (newPost) => {
-            this.instagramService.publishPost(newPost.id).subscribe({
-              next: () => {
-                this.isSaving = false;
-                this.toastService.success('Post published successfully');
-                this.resetForm();
-              },
-              error: (err) => {
-                this.error = 'Failed to publish post';
-                this.isSaving = false;
-                console.error('Error publishing post:', err);
-              }
-            });
-          },
-          error: (err) => {
-            this.error = 'Failed to create post';
-            this.isSaving = false;
-            console.error('Error creating post:', err);
-          }
-        });
-      }
+
+      // Prepare the payload for your backend
+      const payload = {
+        user_id: this.newPost.userId,
+        title: this.newPost.caption, // or use a separate title if you have one
+        content: this.newPost.caption,
+        media_urls: this.newPost.mediaItems.map(item => item.url),
+        scheduled_at: this.newPost.scheduledFor || null,
+        is_draft: false
+      };
+
+      this.apiService.post<any>('posts/publish',{user_id: this.newPost.userId, title: this.newPost.caption, content: this.newPost.caption, media_urls: this.newPost.mediaItems.map(item => item.url)}).subscribe({
+        next: (response) => {
+          this.isSaving = false;
+          this.toastService.success('Post published to Instagram!');
+          this.resetForm();
+          this.loadDrafts();
+          this.currentTab = 'drafts';
+        },
+        error: (err) => {
+          this.error = 'Failed to publish post';
+          this.isSaving = false;
+          this.toastService.error(this.error);
+          console.error('Error publishing post:', err);
+        }
+      });
     }
   }
   

@@ -1,6 +1,6 @@
 <div class="accounts-connect-container">
   <header class="page-header">
-    <button class="back-button" (click)="goBack()">
+    <button class="back-button" (click)="goBack()" *ngIf="selectedPlatform">
       <span>←</span> Back
     </button>
     <h1 class="page-title">Connect Your Social Accounts</h1>
@@ -32,7 +32,6 @@
       <div *ngFor="let platform of availablePlatforms" 
            class="platform-card" 
            [class.platform-card-disabled]="!platform.available"
-           [class.platform-card-connected]="platform.connectedAccounts && platform.connectedAccounts.length > 0"
            (click)="selectPlatform(platform)">
         <div class="platform-icon">
           <img [src]="platform.icon" [alt]="platform.name + ' icon'">
@@ -40,12 +39,6 @@
         <div class="platform-info">
           <h3 class="platform-name">{{ platform.name }}</h3>
           <p class="platform-description">{{ platform.description }}</p>
-          <div class="platform-status" *ngIf="platform.connectedAccounts && platform.connectedAccounts.length > 0">
-            <span class="connected-indicator">Connected</span>
-          </div>
-          <div class="platform-status" *ngIf="!platform.available">
-            <span class="coming-soon-indicator">Coming Soon</span>
-          </div>
         </div>
       </div>
     </div>
@@ -97,13 +90,11 @@
     </div>
 
     <div class="platform-actions">
-      <button class="back-button secondary" (click)="selectedPlatform = null">
+      <button class="back-button secondary" (click)="goBack()">
         Go Back
       </button>
-      <button class="connect-button primary" 
-              [disabled]="!selectedPlatform.available"
-              (click)="connectPlatform()">
-        Connect {{ selectedPlatform.name }}
+      <button class="connect-button primary" (click)="connectInstagram()">
+        Connect Instagram
       </button>
     </div>
   </div>

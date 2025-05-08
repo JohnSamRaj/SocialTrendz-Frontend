@@ -135,49 +135,10 @@ export class SocialAccountsApiService {
    * @returns Observable with the authorization URL
    */
   getInstagramAuthUrl(): Observable<string> {
-    return this.apiService.get<{ url: string }>('social-accounts/instagram/auth-url').pipe(
+    return this.apiService.get<{ url: string }>('auth/instagram').pipe(
       map(response => response.url),
       catchError(error => {
         console.error('Error getting Instagram auth URL:', error);
-        // If API is not available in development, use mock data
-        if (environment.features.enableMockData) {
-          return of('https://api.example.com/oauth/instagram');
-        }
-        return throwError(() => error);
-      })
-    );
-  }
-
-  /**
-   * Exchange Instagram authorization code for access token
-   * 
-   * @param code Authorization code from Instagram
-   * @returns Observable with the connected account
-   */
-  exchangeInstagramCode(code: string): Observable<ConnectedAccount> {
-    return this.apiService.post<ConnectedAccount>('social-accounts/instagram/exchange-code', { code }).pipe(
-      tap(() => {
-        // Invalidate cache after connecting a new account
-        this.invalidateCache();
-      }),
-      catchError(error => {
-        console.error('Error exchanging Instagram code:', error);
-        // If API is not available in development, use mock data
-        if (environment.features.enableMockData && code) {
-          const mockAccount: ConnectedAccount = {
-            id: Math.random().toString(36).substring(2, 15),
-            platform: 'instagram' as 'instagram',
-            username: 'instagram_user',
-            displayName: 'Instagram User',
-            profilePicture: 'assets/icons/instagram-logo.svg',
-            isConnected: true,
-            userId: 1,
-            accessToken: 'mock_access_token',
-            refreshToken: 'mock_refresh_token',
-            tokenExpiry: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000) // 60 days from now
-          };
-          return of(mockAccount);
-        }
         return throwError(() => error);
       })
     );
