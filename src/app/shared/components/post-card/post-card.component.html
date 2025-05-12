@@ -1,38 +1,38 @@
-<div class="post-card" [class.has-media]="post.mediaItems && post.mediaItems.length">
+<div class="post-card" [class.has-media]="post.media_items && post.media_items.length">
   <div class="post-status" *ngIf="showStatus">
     <span [class]="getStatusClass()">{{ getStatusLabel() }}</span>
-    <span *ngIf="post.status === PostStatus.SCHEDULED && post.scheduledFor">
-      {{ getFormattedDate(post.scheduledFor) }}
+    <span *ngIf="post.status === PostStatus.SCHEDULED && post.scheduled_at">
+      {{ getFormattedDate(post.scheduled_at) }}
     </span>
-    <span *ngIf="post.status === PostStatus.PUBLISHED && post.publishedAt">
-      {{ getFormattedDate(post.publishedAt) }}
+    <span *ngIf="post.status === PostStatus.PUBLISHED && post.published_at">
+      {{ getFormattedDate(post.published_at) }}
     </span>
   </div>
   
-  <div class="post-media" *ngIf="post.mediaItems && post.mediaItems.length">
+  <div class="post-media" *ngIf="post.media_items && post.media_items.length">
     <div class="media-container">
       <!-- Show image for image type with lazy loading -->
-      <img *ngIf="post.mediaItems[0].type === 'image'" class="image-placeholder" [appLazyLoadImage]="post.mediaItems[0].url" alt="Post image">
+      <img *ngIf="post.media_items[0].type === 'image'" class="image-placeholder" [appLazyLoadImage]="post.media_items[0].url" alt="Post image">
       
       <!-- Show video for video type -->
-      <div *ngIf="post.mediaItems[0].type === 'video'" class="video-container">
-        <video [src]="post.mediaItems[0].url" controls></video>
+      <div *ngIf="post.media_items[0].type === 'video'" class="video-container">
+        <video [src]="post.media_items[0].url" controls></video>
         <div class="video-indicator">
           <i class="fas fa-play-circle"></i>
         </div>
       </div>
       
       <!-- Show multiple items indicator -->
-      <div class="media-count" *ngIf="post.mediaItems.length > 1">
+      <div class="media-count" *ngIf="post.media_items.length > 1">
         <i class="fas fa-clone"></i>
-        {{ post.mediaItems.length }}
+        {{ post.media_items.length }}
       </div>
     </div>
   </div>
   
   <div class="post-content">
-    <div class="post-caption">
-      {{ post.caption }}
+    <div class="post-description">
+      {{ post.description }}
     </div>
     
     <div class="post-hashtags" *ngIf="post.hashtags && post.hashtags.length">

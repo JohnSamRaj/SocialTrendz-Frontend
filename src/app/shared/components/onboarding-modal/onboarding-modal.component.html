@@ -45,7 +45,7 @@
         
         <form [formGroup]="currentForm">
           <!-- Multiple Choice Question -->
-          <div *ngIf="currentQuestion.type === QuestionType.MULTIPLE_CHOICE" class="mcq-options">
+          <div *ngIf="currentQuestion.type === QuestionType.SINGLE_SELECT" class="mcq-options">
             <div *ngFor="let option of currentQuestion.options" 
                  class="option" 
                  [class.selected]="isOptionSelected(option.id)"
@@ -65,7 +65,8 @@
           </div>
           
           <!-- Multiple Answer Question -->
-          <div *ngIf="currentQuestion.type === QuestionType.MULTIPLE_ANSWER" class="multiple-answer-options">
+          <div *ngIf="currentQuestion.type === QuestionType.MULTI_SELECT" class="multiple-answer-options">
+        
             <div *ngFor="let option of currentQuestion.options; let i = index" 
                  class="option checkbox-option" 
                  (click)="toggleOptionSelection(i)">
@@ -79,6 +80,22 @@
                 <label [for]="'option-' + option.id" class="form-check-label">{{ option.text }}</label>
               </div>
             </div>
+
+            <!-- <div *ngFor="let option of currentQuestion.options; let i = index" 
+     class="option checkbox-option">
+  <div class="form-check">
+    <label >
+      <input
+        type="checkbox"
+        class="form-check-input"
+                [checked]="getOptionsArray(currentForm).at(i).get('selected')?.value"
+        (change)="toggleOptionSelection(i)"
+      />
+      <span class="form-check-label">{{ option.text }}</span>
+    </label>
+  </div>
+</div> -->
+
             
             <div *ngIf="currentForm.get('hasSelection')?.invalid && currentForm.get('hasSelection')?.touched" class="error-message">
               Please select at least one option to continue.

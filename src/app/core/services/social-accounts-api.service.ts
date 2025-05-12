@@ -1,67 +1,63 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, throwError, of } from 'rxjs';
 import { catchError, map, shareReplay, tap } from 'rxjs/operators';
-import { ConnectedAccount } from '../models/connected-account.model';
+import { 
+  ConnectedAccount, 
+  ConnectionStatus, 
+  PlatformAuthResponse,
+  PlatformConnectionResponse,
+  PlatformInfo,
+  mapBackendToFrontendAccount
+} from '../models/connected-account.model';
 import { ApiService } from './api.service';
 import { CacheService } from './cache.service';
-import { environment } from '../../../environments/environment';
+import { ToastService } from '../../shared/services/toast.service';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SocialAccountsApiService {
-  // Cache key constants for better organization
   private readonly CONNECTED_ACCOUNTS_CACHE_KEY = 'connected_accounts';
   private readonly CONNECTED_ACCOUNTS_CACHE_TIME = 5 * 60 * 1000; // 5 minutes
+  private readonly API_BASE = '/api/social-accounts';
 
-  // In-memory cache for frequently accessed data to prevent multiple HTTP requests
   private accountsCache$: Observable<ConnectedAccount[]> | null = null;
 
   constructor(
     private apiService: ApiService,
-    private cacheService: CacheService
+    private cacheService: CacheService,
+    private toastService: ToastService,
+    private authService: AuthService
   ) {}
 
   /**
    * Get all connected social accounts for the current user
    * Uses caching to avoid repeated API calls in a short timeframe
-   * 
-   * @returns Observable with array of connected accounts
    */
   getConnectedAccounts(): Observable<ConnectedAccount[]> {
-    // Check if we already have a request in progress
     if (this.accountsCache$) {
       return this.accountsCache$;
     }
 
-    // Get from cache or API with shareReplay to share the response with multiple subscribers
+    const userId = this.authService.getCurrentUser()?.id;
+    if (!userId) {
+      return throwError(() => new Error('User not authenticated'));
+    }
+
     this.accountsCache$ = this.apiService.getCached<ConnectedAccount[]>(
-      'social-accounts', 
+      `${this.API_BASE}/connected/${userId}`,
       {}, 
       this.CONNECTED_ACCOUNTS_CACHE_TIME
     ).pipe(
-      // Share the same response with all subscribers
+      map(accounts => accounts.map(mapBackendToFrontendAccount)),
       shareReplay(1),
-      // Handle any errors from the API
       catchError(error => {
         console.error('Error fetching connected accounts:', error);
-        // Reset the cache on error
         this.accountsCache$ = null;
-        // If API is not available in development, use mock data
-        if (environment.features.enableMockData) {
-          return of([{
-            id: '1',
-            platform: 'instagram' as 'instagram',
-            username: 'socialtrendz_demo',
-            displayName: 'SocialTrendz Demo',
-            profilePicture: 'assets/icons/instagram-logo.svg',
-            isConnected: true,
-            userId: 1
-          }]);
-        }
+        this.toastService.error('Failed to load connected accounts');
         return throwError(() => error);
       }),
-      // Clear the cache reference after a timeout
       tap(() => {
         setTimeout(() => {
           this.accountsCache$ = null;
@@ -74,32 +70,25 @@ export class SocialAccountsApiService {
 
   /**
    * Connect a new social account
-   * 
-   * @param accountData Social account data to connect
-   * @returns Observable with the connected account
    */
-  connectAccount(accountData: Partial<ConnectedAccount>): Observable<ConnectedAccount> {
-    return this.apiService.post<ConnectedAccount>('social-accounts/connect', accountData).pipe(
+  connectAccount(accountData: Omit<ConnectedAccount, 'id' | 'user_id' | 'created_at' | 'updated_at'>): Observable<ConnectedAccount> {
+    const userId = this.authService.getCurrentUser()?.id;
+    if (!userId) {
+      return throwError(() => new Error('User not authenticated'));
+    }
+
+    return this.apiService.post<ConnectedAccount>(`${this.API_BASE}/connect`, {
+      ...accountData,
+      user_id: userId
+    }).pipe(
+      map(mapBackendToFrontendAccount),
       tap(() => {
-        // Invalidate cache after connecting a new account
         this.invalidateCache();
+        this.toastService.success('Account connected successfully');
       }),
       catchError(error => {
         console.error('Error connecting account:', error);
-        // If API is not available in development, use mock data
-        if (environment.features.enableMockData) {
-          const defaultPlatform = 'instagram' as 'instagram' | 'facebook' | 'twitter' | 'linkedin';
-          const newAccount: ConnectedAccount = {
-            id: Math.random().toString(36).substring(2, 15),
-            platform: (accountData.platform as 'instagram' | 'facebook' | 'twitter' | 'linkedin') || defaultPlatform,
-            username: accountData.username || 'new_user',
-            displayName: accountData.displayName || 'New User',
-            profilePicture: accountData.profilePicture || 'assets/icons/user-placeholder.svg',
-            isConnected: true,
-            userId: 1
-          };
-          return of(newAccount);
-        }
+        this.toastService.error('Failed to connect account');
         return throwError(() => error);
       })
     );
@@ -107,45 +96,102 @@ export class SocialAccountsApiService {
 
   /**
    * Disconnect a social account
-   * 
-   * @param accountId ID of the account to disconnect
-   * @returns Observable with success status
    */
-  disconnectAccount(accountId: string): Observable<boolean> {
-    return this.apiService.post<{ success: boolean }>(`social-accounts/${accountId}/disconnect`, {}).pipe(
-      map(response => response.success),
+  disconnectAccount(platform: string): Observable<PlatformConnectionResponse> {
+    const userId = this.authService.getCurrentUser()?.id;
+    if (!userId) {
+      return throwError(() => new Error('User not authenticated'));
+    }
+
+    return this.apiService.delete<PlatformConnectionResponse>(`${this.API_BASE}/disconnect/${userId}/${platform}`).pipe(
       tap(() => {
-        // Invalidate cache after disconnecting an account
         this.invalidateCache();
+        this.toastService.success('Account disconnected successfully');
       }),
       catchError(error => {
         console.error('Error disconnecting account:', error);
-        // If API is not available in development, use mock data
-        if (environment.features.enableMockData) {
-          return of(true);
-        }
+        this.toastService.error('Failed to disconnect account');
         return throwError(() => error);
       })
     );
   }
 
   /**
-   * Get Instagram authorization URL
-   * 
-   * @returns Observable with the authorization URL
+   * Get platform authorization URL
    */
-  getInstagramAuthUrl(): Observable<string> {
-    return this.apiService.get<{ url: string }>('auth/instagram').pipe(
+  getPlatformAuthUrl(platform: string): Observable<string> {
+    return this.apiService.get<PlatformAuthResponse>(`${this.API_BASE}/auth/${platform}`).pipe(
       map(response => response.url),
       catchError(error => {
-        console.error('Error getting Instagram auth URL:', error);
+        console.error(`Error getting ${platform} auth URL:`, error);
+        this.toastService.error(`Failed to get ${platform} authorization URL`);
         return throwError(() => error);
       })
     );
   }
 
   /**
-   * Invalidate the accounts cache to force fresh data on next request
+   * Check platform connection status
+   */
+  checkPlatformStatus(platform: string): Observable<ConnectionStatus> {
+    const userId = this.authService.getCurrentUser()?.id;
+    if (!userId) {
+      return throwError(() => new Error('User not authenticated'));
+    }
+
+    return this.apiService.get<ConnectionStatus>(
+      `${this.API_BASE}/status/${userId}/${platform}`
+    ).pipe(
+      map(status => ({
+        ...status,
+        account: status.account ? mapBackendToFrontendAccount(status.account) : undefined
+      })),
+      catchError(error => {
+        console.error(`Error checking ${platform} status:`, error);
+        this.toastService.error(`Failed to check ${platform} connection status`);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Get available platform information
+   */
+  getPlatformInfo(): Observable<PlatformInfo[]> {
+    return of([
+      {
+        id: 'instagram',
+        name: 'Instagram',
+        icon: 'assets/icons/instagram-logo.svg',
+        available: true,
+        description: 'Connect your Instagram Business account to schedule posts and view analytics.'
+      },
+      {
+        id: 'facebook',
+        name: 'Facebook',
+        icon: 'assets/icons/facebook-logo.svg',
+        available: false,
+        description: 'Connect your Facebook page to schedule posts and view insights. (Coming Soon)'
+      },
+      {
+        id: 'twitter',
+        name: 'Twitter',
+        icon: 'assets/icons/twitter-logo.svg',
+        available: false,
+        description: 'Connect your Twitter account to schedule tweets and analyze engagement. (Coming Soon)'
+      },
+      {
+        id: 'linkedin',
+        name: 'LinkedIn',
+        icon: 'assets/icons/linkedin-logo.svg',
+        available: false,
+        description: 'Connect your LinkedIn profile to schedule posts and monitor performance. (Coming Soon)'
+      }
+    ]);
+  }
+
+  /**
+   * Invalidate the accounts cache
    */
   private invalidateCache(): void {
     this.accountsCache$ = null;

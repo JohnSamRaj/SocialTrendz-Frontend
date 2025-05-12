@@ -35,6 +35,10 @@
            (click)="selectPlatform(platform)">
         <div class="platform-icon">
           <img [src]="platform.icon" [alt]="platform.name + ' icon'">
+          <div class="connection-status" *ngIf="platform.connectedAccounts?.length">
+            <span class="status-indicator connected"></span>
+            <span class="status-text">{{ platform.name }} Connected</span>
+          </div>
         </div>
         <div class="platform-info">
           <h3 class="platform-name">{{ platform.name }}</h3>
@@ -93,8 +97,11 @@
       <button class="back-button secondary" (click)="goBack()">
         Go Back
       </button>
-      <button class="connect-button primary" (click)="connectInstagram()">
-        Connect Instagram
+      <button class="connect-button primary" 
+              (click)="connectPlatform()"
+              [disabled]="connectingPlatform">
+        <span *ngIf="!connectingPlatform">Connect {{ selectedPlatform.name }}</span>
+        <span *ngIf="connectingPlatform">Connecting...</span>
       </button>
     </div>
   </div>

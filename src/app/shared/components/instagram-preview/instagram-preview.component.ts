@@ -12,11 +12,11 @@ import { LazyLoadImageDirective } from '../../directives/lazy-load-image.directi
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InstagramPreviewComponent implements OnChanges {
-  @Input() caption: string = '';
   @Input() hashtags: string[] = [];
-  @Input() mediaItems: MediaItem[] = [];
-  @Input() username: string = 'username';
-  @Input() userProfileImage: string = 'assets/images/default-profile.png';
+  @Input() media_items: MediaItem[] = [];
+  @Input() user_name: string = 'user_name';
+  @Input() user_profile_image: string = 'assets/images/default-profile.png';
+  @Input() description: string = '';
   
   formattedCaption: string = '';
   formattedHashtags: string = '';
@@ -25,13 +25,16 @@ export class InstagramPreviewComponent implements OnChanges {
   constructor(private cdr: ChangeDetectorRef) { }
   
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['caption'] || changes['hashtags']) {
+    if (changes['media_items']) {
+      this.currentSlide = 0;
+    }
+    if (changes['description'] || changes['hashtags']) {
       this.formatCaptionAndHashtags();
     }
   }
   
   formatCaptionAndHashtags(): void {
-    this.formattedCaption = this.caption;
+    this.formattedCaption = this.description;
     
     // Format hashtags with # symbol
     this.formattedHashtags = this.hashtags
@@ -40,7 +43,7 @@ export class InstagramPreviewComponent implements OnChanges {
   }
   
   nextSlide(): void {
-    if (this.currentSlide < this.mediaItems.length - 1) {
+    if (this.currentSlide < this.media_items.length - 1) {
       this.currentSlide++;
     }
   }
@@ -52,7 +55,7 @@ export class InstagramPreviewComponent implements OnChanges {
   }
   
   get currentMedia(): MediaItem | null {
-    return this.mediaItems.length > 0 ? this.mediaItems[this.currentSlide] : null;
+    return this.media_items.length > 0 ? this.media_items[this.currentSlide] : null;
   }
   
   // Cache for media orientations to avoid recalculation

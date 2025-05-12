@@ -28,8 +28,8 @@
     
     <div class="user-menu" *ngIf="user" [class.active]="isProfileMenuOpen">
       <div class="user-avatar" (click)="toggleProfileMenu($event)">
-        <img *ngIf="user.profilePicture" [src]="user.profilePicture" alt="Profile Picture">
-        <div *ngIf="!user.profilePicture" class="avatar-placeholder">
+        <img *ngIf="user.profile_picture" [src]="user.profile_picture" alt="Profile Picture">
+        <div *ngIf="!user.profile_picture" class="avatar-placeholder">
           {{ user.full_name ? user.full_name[0] : 'U' }}
         </div>
       </div>

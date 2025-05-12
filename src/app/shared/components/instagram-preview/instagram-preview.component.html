@@ -1,8 +1,8 @@
 <div class="instagram-preview">
   <!-- Post Header -->
   <div class="instagram-header">
-    <img [appLazyLoadImage]="userProfileImage" alt="Profile" class="profile-img">
-    <div class="username">{{ username }}</div>
+    <img [appLazyLoadImage]="user_profile_image" alt="Profile" class="profile-img">
+    <div class="username">{{ user_name }}</div>
     <div class="more-options">
       <i class="fas fa-ellipsis-h"></i>
     </div>
@@ -37,7 +37,7 @@
     </ng-container>
     
     <!-- Carousel navigation (only if multiple media items) -->
-    <div *ngIf="mediaItems.length > 1" class="carousel-navigation">
+    <div *ngIf="media_items.length > 1" class="carousel-navigation">
       <button 
         class="carousel-btn" 
         [disabled]="currentSlide === 0" 
@@ -47,7 +47,7 @@
       </button>
       <button 
         class="carousel-btn" 
-        [disabled]="currentSlide === mediaItems.length - 1" 
+        [disabled]="currentSlide === media_items.length - 1" 
         (click)="nextSlide()"
       >
         <i class="fas fa-chevron-right"></i>
@@ -55,9 +55,9 @@
     </div>
     
     <!-- Carousel indicators (only if multiple media items) -->
-    <div *ngIf="mediaItems.length > 1" class="carousel-indicators">
+    <div *ngIf="media_items.length > 1" class="carousel-indicators">
       <div 
-        *ngFor="let media of mediaItems; let i = index; trackBy: trackByMediaId" 
+        *ngFor="let media of media_items; let i = index; trackBy: trackByMediaId" 
         class="indicator" 
         [ngClass]="{'active': i === currentSlide}"
       ></div>
@@ -85,7 +85,7 @@
   
   <!-- Caption -->
   <div *ngIf="formattedCaption" class="post-caption">
-    <span class="caption-username">{{ username }}</span>
+    <span class="caption-username">{{ user_name }}</span>
     {{ formattedCaption }}
   </div>
   

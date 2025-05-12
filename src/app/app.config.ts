@@ -6,6 +6,7 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideClientHydration } from '@angular/platform-browser';
 import { credentialsInterceptor } from './core/interceptors/credentials.interceptor';
 import { apiInterceptor } from './core/interceptors/api.interceptor';
+import { LazyLoadImageModule } from 'ng-lazyload-image';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -28,6 +29,9 @@ export const appConfig: ApplicationConfig = {
     provideAnimations(),
     
     // Client hydration for better SSR support if needed in the future
-    provideClientHydration()
+    provideClientHydration(),
+
+    // Lazy load image module
+    importProvidersFrom(LazyLoadImageModule)
   ]
 };

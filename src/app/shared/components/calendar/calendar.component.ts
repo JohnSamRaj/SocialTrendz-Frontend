@@ -92,7 +92,7 @@ export class CalendarComponent implements OnInit {
   
   getPostsForDate(date: Date): Post[] {
     return this.posts.filter(post => {
-      const targetDate = post.scheduledFor || post.publishedAt;
+      const targetDate = post.scheduled_at || post.published_at;
       if (!targetDate) return false;
       
       const postDate = new Date(targetDate);

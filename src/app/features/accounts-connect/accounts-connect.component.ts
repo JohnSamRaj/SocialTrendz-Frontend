@@ -3,10 +3,13 @@ import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { map, take } from 'rxjs/operators';
 import { ConnectedAccount, PlatformInfo } from '../../core/models/connected-account.model';
-import { PlatformConnectionService, PlatformType } from '../../core/services/platform-connection.service';
+import { PlatformConnectionService } from '../../core/services/platform-connection.service';
 import { SocialAccountsApiService } from '../../core/services/social-accounts-api.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { ToastService } from '../../shared/services/toast.service';
+import { environment } from '../../../environments/environment';
+
+type SupportedPlatform = 'instagram' | 'facebook' | 'twitter' | 'linkedin';
 
 @Component({
   selector: 'app-accounts-connect',
@@ -19,6 +22,7 @@ export class AccountsConnectComponent implements OnInit {
   availablePlatforms: PlatformInfo[] = [];
   selectedPlatform: PlatformInfo | null = null;
   loading = false;
+  connectingPlatform = false;
   error: string | null = null;
   isNewUser = false;
 
@@ -34,10 +38,30 @@ export class AccountsConnectComponent implements OnInit {
   ngOnInit(): void {
     this.loadAvailablePlatforms();
     this.checkIfNewUser();
+    this.handlePlatformConnectionCallback();
+  }
+
+  /**
+   * Handle platform connection callback from OAuth redirect
+   */
+  private handlePlatformConnectionCallback(): void {
     this.route.queryParams.subscribe(params => {
-      if (params['instagram_connected']) {
-        this.toastService.show('Instagram connected', 'success');
-        window.history.replaceState({}, document.title, window.location.pathname);
+      const platform = params['platform'] as SupportedPlatform;
+      if (platform && params['connected']) {
+        // Show success message
+        this.toastService.info(`${platform.charAt(0).toUpperCase() + platform.slice(1)} Connected Successfully!`);
+        
+        // Clean up the URL by removing both query params and hash
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+        
+        // Refresh the platforms list
+        this.loadAvailablePlatforms();
+      } else if (params['error']) {
+        this.toastService.error(`Connection failed: ${params['error']}`);
+        // Clean up the URL
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
       }
     });
   }
@@ -45,10 +69,10 @@ export class AccountsConnectComponent implements OnInit {
   /**
    * Check if the user is new (just completed onboarding)
    */
-  checkIfNewUser(): void {
+  private checkIfNewUser(): void {
     const currentUser = this.authService.getCurrentUser();
     if (currentUser) {
-      this.isNewUser = !currentUser.hasCompletedOnboarding;
+      this.isNewUser = !currentUser.has_completed_onboarding;
     }
   }
 
@@ -98,14 +122,18 @@ export class AccountsConnectComponent implements OnInit {
         next: (statuses) => {
           // Update the available platforms with connection status
           this.availablePlatforms.forEach(platform => {
-            const platformId = platform.id as PlatformType;
+            const platformId = platform.id as SupportedPlatform;
             if (statuses[platformId] !== undefined) {
-              platform.connectedAccounts = statuses[platformId] ? [{ 
-                id: platform.id,
-                platform: platformId as 'instagram' | 'facebook' | 'twitter' | 'linkedin',
-                username: `${platformId}_user`,
-                isConnected: true,
-                userId: 1
+              platform.connectedAccounts = statuses[platformId] ? [{
+                id: Math.floor(Math.random() * 1000),
+                user_id: this.authService.getCurrentUser()?.id || 0,
+                platform: platformId,
+                account_name: `${platformId}_account`,
+                display_name: `${platformId} Account`,
+                access_token: 'mock_token',
+                profile_image_url: `assets/images/platforms/${platformId}.svg`,
+                created_at: new Date(),
+                updated_at: new Date()
               }] : [];
             }
           });
@@ -130,17 +158,37 @@ export class AccountsConnectComponent implements OnInit {
   }
 
   /**
-   * Connect to Instagram by redirecting to the auth URL
+   * Connect to a platform by redirecting to the auth URL
    */
-  connectInstagram(): void {
-    // Redirect directly to your backend's Instagram OAuth route
-    window.location.href = 'http://localhost:3000/api/auth/instagram';
+  connectPlatform(): void {
+    if (!this.selectedPlatform) {
+      return;
+    }
+
+    try {
+      this.connectingPlatform = true;
+      const platformId = this.selectedPlatform.id as SupportedPlatform;
+      
+      // Show loading toast
+      this.toastService.info(`Connecting to ${this.selectedPlatform.name}...`);
+      
+      // Redirect to platform auth
+      window.location.href = `${environment.apiUrl}/auth/${platformId}`;
+    } catch (error) {
+      console.error(`Error connecting to ${this.selectedPlatform.name}:`, error);
+      this.toastService.error(`Failed to connect to ${this.selectedPlatform.name}. Please try again.`);
+      this.connectingPlatform = false;
+    }
   }
 
   /**
    * Go back to dashboard or previous page
    */
   goBack(): void {
-    this.router.navigate(['/dashboard']);
+    if (this.selectedPlatform) {
+      this.selectedPlatform = null;
+    } else {
+      this.router.navigate(['/dashboard']);
+    }
   }
 }

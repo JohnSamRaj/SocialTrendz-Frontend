@@ -1,5 +1,9 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { ApiService } from './api.service';
+import { ToastService } from '../../shared/services/toast.service';
+import { of } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
 interface AIGenerationRequest {
@@ -17,60 +21,79 @@ interface AIGenerationResponse {
   providedIn: 'root'
 })
 export class AIService {
-  // In a real app, this would connect to an AI API like Gemini
-  
-  constructor() { }
+  private readonly API_BASE = '/api/ai';
 
-  generateCaption(mediaUrls: string[], context?: string): Observable<AIGenerationResponse> {
-    // Mock AI caption generation
-    const captions = [
-      "Embracing the vibrant colors of life 🌈 #LiveAuthentic",
-      "The best memories are made when we're together ✨",
-      "Finding beauty in the everyday moments ❤️",
-      "New adventures await just around the corner 🚶‍♀️",
-      "Creating my own sunshine, one day at a time ☀️"
-    ];
-    
-    const alternatives = [
-      "Living my best life, one photo at a time 📸",
-      "The journey is the destination 🗺️",
-      "Collecting moments, not things ✨",
-      "Life happens, coffee helps ☕"
-    ];
-    
-    // Select a random caption
-    const randomIndex = Math.floor(Math.random() * captions.length);
-    
-    return of({
-      content: captions[randomIndex],
-      alternativeOptions: alternatives
-    }).pipe(delay(1500)); // Simulate API delay
+  constructor(
+    private apiService: ApiService,
+    private toastService: ToastService
+  ) {}
+
+  /**
+   * Generate caption for media
+   */
+  generateDescription(mediaUrls: string[]): Observable<AIGenerationResponse> {
+    return this.apiService.post<AIGenerationResponse>(`${this.API_BASE}/generate-description`, {
+      mediaUrls
+    }).pipe(
+      catchError(error => {
+        this.toastService.error('Failed to generate description');
+        return throwError(() => error);
+      })
+    );
   }
 
+  /**
+   * Generate hashtags based on content
+   */
   generateHashtags(mediaUrls: string[], context?: string): Observable<AIGenerationResponse> {
-    // Mock AI hashtag generation
-    const hashtagSets = [
-      "#instagram #instagood #instadaily #photooftheday #photography",
-      "#lifestyle #travel #adventure #explore #wanderlust",
-      "#fashion #style #ootd #beauty #trendy",
-      "#food #foodie #delicious #yummy #tasty",
-      "#fitness #health #workout #motivation #gym"
-    ];
-    
-    const alternatives = [
-      "#love #happy #joy #life #inspiration",
-      "#nature #beautiful #amazing #wonderful #awesome",
-      "#art #creative #design #inspiration #artist",
-      "#business #success #entrepreneur #motivation #hustle"
-    ];
-    
-    // Select a random set
-    const randomIndex = Math.floor(Math.random() * hashtagSets.length);
-    
-    return of({
-      content: hashtagSets[randomIndex],
-      alternativeOptions: alternatives
-    }).pipe(delay(1200)); // Simulate API delay
+    return this.apiService.post<AIGenerationResponse>(`${this.API_BASE}/generate-hashtags`, {
+      mediaUrls,
+      context
+    }).pipe(
+      catchError(error => {
+        this.toastService.error('Failed to generate hashtags');
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Generate image based on prompt
+   */
+  generateImage(prompt: string): Observable<{ imageUrl: string }> {
+    return this.apiService.post<{ imageUrl: string }>(`${this.API_BASE}/generate-image`, {
+      prompt
+    }).pipe(
+      catchError(error => {
+        this.toastService.error('Failed to generate image');
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Generate content using the content wizard
+   */
+  generateContent(data: {
+    platform: string;
+    topic: string;
+    tone: string;
+    generateImage: boolean;
+  }): Observable<{
+    description: string;
+    hashtags: string;
+    imageUrl?: string;
+  }> {
+    return this.apiService.post<{
+      description: string;
+      hashtags: string;
+      imageUrl?: string;
+    }>(`${this.API_BASE}/generate-content`, data).pipe(
+      catchError(error => {
+        this.toastService.error('Failed to generate content');
+        return throwError(() => error);
+      })
+    );
   }
 
   generateThumbnailSuggestion(mediaUrls: string[]): Observable<AIGenerationResponse> {

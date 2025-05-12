@@ -345,8 +345,8 @@
   font-size: 0.9rem;
 }
 
-/* Caption and Hashtags */
-.caption-textarea, .hashtags-textarea {
+/* Description and Hashtags */
+.description-textarea, .hashtags-textarea {
   width: 100%;
   border: 1px solid #e0e0e0;
   border-radius: var(--border-radius);
@@ -356,7 +356,7 @@
   transition: var(--transition-normal);
 }
 
-.caption-textarea:focus, .hashtags-textarea:focus {
+.description-textarea:focus, .hashtags-textarea:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(247, 158, 216, 0.2);
   outline: none;

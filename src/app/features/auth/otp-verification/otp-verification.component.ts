@@ -16,19 +16,31 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
   @Output() verified = new EventEmitter<boolean>();
   @Output() close = new EventEmitter<void>();
 
-  otpForm: FormGroup;
+  otpForm!: FormGroup;
   isLoading = false;
   errorMessage = '';
   
-  // Time remaining for resend (in seconds)
+  private readonly RESEND_TIMEOUT = 60; // seconds
   resendTimer = 0;
-  timerInterval: any;
+  private timerInterval: any;
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
     private toastService: ToastService
   ) {
+    this.initializeForm();
+  }
+
+  ngOnInit(): void {
+    this.startResendTimer();
+  }
+
+  ngOnDestroy(): void {
+    this.clearTimer();
+  }
+
+  private initializeForm(): void {
     this.otpForm = this.fb.group({
       digit1: ['', [Validators.required, Validators.pattern(/^[0-9]$/)]],
       digit2: ['', [Validators.required, Validators.pattern(/^[0-9]$/)]],
@@ -39,25 +51,20 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnInit(): void {
-    this.startResendTimer();
-  }
-
-  ngOnDestroy(): void {
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
-    }
-  }
-
   onSubmit(): void {
-    if (this.otpForm.invalid) {
-      return;
-    }
+    if (this.otpForm.invalid) return;
 
-    const otp = Object.keys(this.otpForm.controls)
+    const otp = this.getOtpFromForm();
+    this.verifyOtp(otp);
+  }
+
+  private getOtpFromForm(): string {
+    return Object.keys(this.otpForm.controls)
       .map(key => this.otpForm.get(key)?.value)
       .join('');
+  }
 
+  private verifyOtp(otp: string): void {
     this.isLoading = true;
     this.errorMessage = '';
 
@@ -68,44 +75,58 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
         this.verified.emit(true);
       },
       error: (error) => {
-        this.errorMessage = error.message || 'OTP verification failed. Please try again.';
-        this.toastService.error('OTP verification failed. Please check your code and try again.');
-        this.isLoading = false;
+        this.handleVerificationError(error);
       }
     });
+  }
+
+  private handleVerificationError(error: any): void {
+    this.errorMessage = error.message || 'OTP verification failed. Please try again.';
+    this.toastService.error('OTP verification failed. Please check your code and try again.');
+    this.isLoading = false;
   }
 
   onDigitInput(event: any, nextInput?: HTMLInputElement, prevInput?: HTMLInputElement): void {
     const value = event.target.value;
     
-    // Only allow numbers
-    if (value && !/^[0-9]$/.test(value)) {
+    if (!this.isValidDigit(value)) {
       event.target.value = '';
       return;
     }
     
-    // Auto-move to next input on digit entry
+    this.handleInputNavigation(value, nextInput, prevInput, event);
+  }
+
+  /**
+   * Validate if input is a single digit
+   */
+  private isValidDigit(value: string): boolean {
+    return Boolean(value && /^[0-9]$/.test(value));
+  }
+
+  private handleInputNavigation(
+    value: string, 
+    nextInput?: HTMLInputElement, 
+    prevInput?: HTMLInputElement, 
+    event?: any
+  ): void {
     if (value.length === 1 && nextInput) {
       nextInput.focus();
     }
     
-    // Move to previous input on backspace
-    if (value.length === 0 && prevInput && event.inputType === 'deleteContentBackward') {
+    if (value.length === 0 && prevInput && event?.inputType === 'deleteContentBackward') {
       prevInput.focus();
     }
   }
 
   onKeyDown(event: KeyboardEvent, prevInput?: HTMLInputElement): void {
-    // Handle backspace
     if (event.key === 'Backspace' && prevInput && (event.target as HTMLInputElement).value === '') {
       prevInput.focus();
     }
   }
 
   resendOtp(): void {
-    if (this.resendTimer > 0) {
-      return;
-    }
+    if (this.resendTimer > 0) return;
     
     this.authService.resendOtp(this.email).subscribe({
       next: () => {
@@ -120,18 +141,21 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
   }
 
   private startResendTimer(): void {
-    this.resendTimer = 60; // 60 seconds
-    
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
-    }
+    this.resendTimer = this.RESEND_TIMEOUT;
+    this.clearTimer();
     
     this.timerInterval = setInterval(() => {
       this.resendTimer--;
       if (this.resendTimer <= 0) {
-        clearInterval(this.timerInterval);
+        this.clearTimer();
       }
     }, 1000);
+  }
+
+  private clearTimer(): void {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+    }
   }
   
   closeModal(): void {

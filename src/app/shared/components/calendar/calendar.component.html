@@ -33,8 +33,8 @@
           [class]="getPostClass(post)"
           (click)="selectPost(post, $event)"
         >
-          <span class="post-time">{{ formatTime(post.scheduledFor || post.publishedAt) }}</span>
-          <span class="post-title">{{ post.caption.substring(0, 20) }}{{ post.caption.length > 20 ? '...' : '' }}</span>
+          <span class="post-time">{{ formatTime(post.scheduled_at || post.published_at) }}</span>
+          <span class="post-title">{{ post.description.substring(0, 20) }}{{ post.description.length > 20 ? '...' : '' }}</span>
         </div>
         
         <div class="more-posts" *ngIf="day.posts.length > 3">

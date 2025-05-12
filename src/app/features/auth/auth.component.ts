@@ -1,9 +1,8 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth/auth.service';
-import { TourService } from '../../core/services/tour.service';
 import { User } from '../../core/models/user.model';
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
 import { ToastService } from '../../shared/services/toast.service';
@@ -23,19 +22,21 @@ import { OtpVerificationComponent } from './otp-verification/otp-verification.co
   styleUrls: ['./auth.component.css']
 })
 export class AuthComponent implements OnInit {
+  // Form groups for login and registration
+  loginForm!: FormGroup;
+  registerForm!: FormGroup;
   
-  loginForm: FormGroup;
-  registerForm: FormGroup;
-  isLogin = true; // Toggle between login and register views
+  // Component state variables
+  isLogin = true;
   isLoading = false;
   errorMessage = '';
   returnUrl = '/dashboard';
   
-  // OTP verification modal
+  // OTP verification state
   showOtpVerification = false;
   otpEmail = '';
   
-  // Add success messages for completed registration and verified email
+  // Success messages
   successMessage = '';
   registrationComplete = false;
   verifiedEmail = '';
@@ -45,21 +46,31 @@ export class AuthComponent implements OnInit {
     private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute,
-    private tourService: TourService,
     private toastService: ToastService
   ) {
-    // Redirect to home if already logged in
+    // Redirect if already logged in
     if (this.authService.isLoggedIn()) {
       this.router.navigate(['/dashboard']);
     }
 
-    // Initialize login form
+    this.initializeForms();
+    this.checkSessionStorage();
+  }
+
+  ngOnInit(): void {
+    this.isLoading = true;
+    setTimeout(() => this.isLoading = false, 1000);
+  }
+
+  /**
+   * Initialize login and registration forms with validators
+   */
+  private initializeForms(): void {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
 
-    // Initialize register form
     this.registerForm = this.fb.group({
       fullName: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
@@ -67,60 +78,55 @@ export class AuthComponent implements OnInit {
       confirmPassword: ['', [Validators.required]]
     }, { validator: this.passwordMatchValidator });
 
-    // Get return url from route parameters or default to '/'
     this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
+  }
     
-    // Check for registration completion in session storage
+  /**
+   * Check session storage for registration completion or social login success
+   */
+  private checkSessionStorage(): void {
     if (sessionStorage.getItem('registrationComplete') === 'true') {
       this.registrationComplete = true;
       this.verifiedEmail = sessionStorage.getItem('verifiedEmail') || '';
       this.successMessage = `Registration complete! Your account has been verified. Please log in with your credentials.`;
       
-      // Pre-fill the email field if available
       if (this.verifiedEmail) {
         this.loginForm.patchValue({ email: this.verifiedEmail });
       }
       
-      // Clear the session storage
       sessionStorage.removeItem('registrationComplete');
       sessionStorage.removeItem('verifiedEmail');
-      
-      // Ensure we're on the login view
       this.isLogin = true;
     }
     
-    // Check for social login success
     if (sessionStorage.getItem('socialLoginSuccess')) {
       this.successMessage = sessionStorage.getItem('socialLoginSuccess') || '';
       sessionStorage.removeItem('socialLoginSuccess');
     }
   }
 
-  ngOnInit(): void {
-    // Set initial loading state
-    this.isLoading = true;
-    
-    // Simulate loading delay
-    setTimeout(() => {
-      this.isLoading = false;
-    }, 1000);
-  }
-  
+  /**
+   * Validates if password and confirm password match
+   */
   passwordMatchValidator(g: FormGroup) {
     return g.get('password')?.value === g.get('confirmPassword')?.value
       ? null
       : { mismatch: true };
   }
 
+  /**
+   * Toggle between login and register views
+   */
   toggleView(): void {
     this.isLogin = !this.isLogin;
     this.errorMessage = '';
   }
 
+  /**
+   * Handle login form submission
+   */
   onLoginSubmit(): void {
-    if (this.loginForm.invalid) {
-      return;
-    }
+    if (this.loginForm.invalid) return;
 
     this.isLoading = true;
     this.errorMessage = '';
@@ -129,10 +135,9 @@ export class AuthComponent implements OnInit {
       email: this.loginForm.value.email,
       password: this.loginForm.value.password
     }).subscribe({
-      next: (response) => {
+      next: () => {
         this.isLoading = false;
         this.toastService.success('Login successful! Welcome back.');
-        // Manually navigate to dashboard
         this.router.navigate(['/dashboard']);
       },
       error: (error) => {
@@ -143,10 +148,11 @@ export class AuthComponent implements OnInit {
     });
   }
 
+  /**
+   * Handle registration form submission
+   */
   onRegisterSubmit(): void {
-    if (this.registerForm.invalid) {
-      return;
-    }
+    if (this.registerForm.invalid) return;
   
     this.isLoading = true;
     this.errorMessage = '';
@@ -161,15 +167,13 @@ export class AuthComponent implements OnInit {
         this.isLoading = false;
         
         if (response.needsOtpVerification) {
-          // Show OTP verification modal
           this.otpEmail = this.registerForm.value.email;
           this.showOtpVerification = true;
           this.toastService.info('Please verify your email with the OTP code we just sent.');
         } else {
-          // If no OTP verification is needed, show success message
           this.successMessage = 'Registration successful! You can now log in.';
           this.toastService.success('Registration successful!');
-          this.isLogin = true; // Switch to login form automatically
+          this.isLogin = true;
         }
       },
       error: (error) => {
@@ -188,9 +192,7 @@ export class AuthComponent implements OnInit {
     if (success) {
       this.successMessage = 'Email verified successfully! You can now log in.';
       this.toastService.success('Email verified successfully!');
-      this.isLogin = true; // Switch to login form
-      
-      // Pre-fill the email field
+      this.isLogin = true;
       this.loginForm.patchValue({ email: this.otpEmail });
     }
   }
@@ -203,7 +205,7 @@ export class AuthComponent implements OnInit {
   }
 
   /**
-   * Handle login with Google OAuth
+   * Handle Google OAuth login
    */
   loginWithGoogle(): void {
     this.isLoading = true;
@@ -226,7 +228,7 @@ export class AuthComponent implements OnInit {
   }
 
   /**
-   * Handle login with Apple OAuth
+   * Handle Apple OAuth login
    */
   loginWithApple(): void {
     this.isLoading = true;
@@ -249,45 +251,13 @@ export class AuthComponent implements OnInit {
   }
   
   /**
-   * Common handler for OAuth success
-   * Determines if onboarding should be shown and navigates user
+   * Handle OAuth login success and navigation
    */
   private handleOAuthSuccess(user: User): void {
-    // If user hasn't completed onboarding, mark as incomplete
-    if (user.hasCompletedOnboarding === false) {
-      // This will show the onboarding tour when the user is redirected
+    if (user.has_completed_onboarding === false) {
       localStorage.removeItem('tour_completed');
-      localStorage.removeItem('hasCompletedOnboarding');
+      localStorage.removeItem('has_completed_onboarding');
     }
-    
-    // Check if this seems to be a new registration
-    const isNewUser = this.checkIfNewUser(user);
-    
-    // Determine where to navigate
-    // Since onboarding component has been removed, all users go to dashboard
     this.router.navigate([this.returnUrl]);
   }
-  
-  /**
-   * Check if this is likely a new user 
-   * based on the proximity of createdAt and lastLogin timestamps
-   */
-  private checkIfNewUser(user: User): boolean {
-    if (user.createdAt && user.lastLogin) {
-      const createdDate = new Date(user.createdAt);
-      const loginDate = new Date(user.lastLogin);
-      // If account was created very recently compared to login time, it's likely a new registration
-      if ((loginDate.getTime() - createdDate.getTime()) < 10000) {
-        return true;
-      }
-    }
-    
-    // If there's an explicit flag, use that
-    if (user.hasCompletedOnboarding === false) {
-      return true;
-    }
-    
-    return false;
-  }
-  
 }

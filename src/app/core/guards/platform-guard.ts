@@ -22,7 +22,7 @@ export const platformGuard: CanActivateFn = (route, state) => {
 
   // Then check if the user has completed onboarding
   const currentUser = authService.getCurrentUser();
-  if (currentUser && !currentUser.hasCompletedOnboarding) {
+  if (currentUser && !currentUser.has_completed_onboarding) {
     console.log('User has not completed onboarding, redirecting to dashboard');
     router.navigate(['/dashboard']); // Onboarding modal will appear here
     return false;

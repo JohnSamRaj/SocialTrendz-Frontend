@@ -1,81 +1,55 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { map, tap, catchError } from 'rxjs/operators';
 import { ConnectedAccount } from '../models/connected-account.model';
 import { DataService } from './data.service';
+import { ApiService } from './api.service';
+import { ToastService } from '../../shared/services/toast.service';
 
-export interface PlatformConnection {
-  platformId: string;
-  name: string;
-  isConnected: boolean;
-  lastSynced?: Date;
-  profileData?: any;
+export interface ConnectedPlatform {
+  id: number;
+  platform: string;
+  account_name: string;
+  profile_image_url: string;
+  access_token: string;
+  refresh_token?: string;
+  token_type: string;
+  token_expires_at: string;
+  scopes: string[];
 }
 
 export type PlatformType = 'instagram' | 'facebook' | 'twitter' | 'linkedin' | 'tiktok';
+
+export interface PlatformStatuses {
+  instagram: boolean;
+  facebook: boolean;
+  twitter: boolean;
+  linkedin: boolean;
+  tiktok: boolean;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class PlatformConnectionService {
-  private platformsSubject = new BehaviorSubject<PlatformConnection[]>([]);
-  public platforms$ = this.platformsSubject.asObservable();
-  
-  constructor(private dataService: DataService) {
-    this.loadConnectedPlatforms();
+  private connectedPlatforms = new BehaviorSubject<ConnectedPlatform[]>([]);
+  private readonly API_BASE = '/api/social-accounts';
+
+  constructor(
+    private apiService: ApiService,
+    private toastService: ToastService
+  ) {}
+
+  // Get connected platforms as observable
+  getConnectedPlatforms(): Observable<ConnectedPlatform[]> {
+    return this.connectedPlatforms.asObservable();
   }
 
-  /**
-   * Load all connected platforms for the current user
-   */
-  loadConnectedPlatforms(): void {
-    // Use the DataService to get connected accounts
-    this.dataService.getConnectedAccounts().subscribe({
-      next: (accounts) => {
-        // Convert ConnectedAccount[] to PlatformConnection[]
-        const platforms: PlatformConnection[] = accounts.map(account => ({
-          platformId: account.id,
-          name: account.platform,
-          isConnected: account.isConnected,
-          lastSynced: new Date(),
-          profileData: {
-            username: account.username,
-            displayName: account.displayName,
-            profilePicture: account.profilePicture
-          }
-        }));
-        
-        this.platformsSubject.next(platforms);
-      },
-      error: (err) => {
-        console.error('Error loading connected platforms:', err);
-        // If error, set empty array
-        this.platformsSubject.next([]);
-      }
-    });
-  }
-
-  /**
-   * Check if a specific platform is connected
-   * @param platformType - The type of platform to check
-   * @returns Observable boolean indicating connection status
-   */
-  isPlatformConnected(platformType: PlatformType): Observable<boolean> {
-    return this.platforms$.pipe(
-      map(platforms => 
-        platforms.some(p => p.name.toLowerCase() === platformType && p.isConnected)
-      )
-    );
-  }
-
-  /**
-   * Get connection status for all platforms
-   * @returns Observable with object containing status for each platform
-   */
-  getConnectionStatuses(): Observable<Record<PlatformType, boolean>> {
-    return this.platforms$.pipe(
+  // Get connection status for all platforms
+  getConnectionStatuses(): Observable<PlatformStatuses> {
+    return this.connectedPlatforms.pipe(
       map(platforms => {
-        const statuses = {
+        const statuses: PlatformStatuses = {
           instagram: false,
           facebook: false,
           twitter: false,
@@ -84,9 +58,9 @@ export class PlatformConnectionService {
         };
         
         platforms.forEach(platform => {
-          const platformName = platform.name.toLowerCase() as PlatformType;
+          const platformName = platform.platform.toLowerCase() as PlatformType;
           if (platformName in statuses) {
-            statuses[platformName] = platform.isConnected;
+            statuses[platformName] = true;
           }
         });
         
@@ -95,69 +69,77 @@ export class PlatformConnectionService {
     );
   }
 
-  /**
-   * Connect a platform by initiating OAuth flow
-   * @param platformType - The platform to connect
-   * @returns Observable with connection result
-   */
-  connectPlatform(platformType: PlatformType): Observable<any> {
-    // In a real implementation, this would redirect to OAuth page
-    // For this mock, we'll simulate a successful connection
-    
-    const mockAuthResponse = {
-      success: true,
-      authUrl: `https://example.com/oauth/${platformType}`
-    };
-    
-    console.log(`Simulating connection to ${platformType}...`);
-    
-    // Simulate a successful connection by adding a new connected platform
-    const newPlatforms = [...this.platformsSubject.value];
-    newPlatforms.push({
-      platformId: Math.random().toString(36).substring(2, 15),
-      name: platformType,
-      isConnected: true,
-      lastSynced: new Date()
-    });
-    
-    this.platformsSubject.next(newPlatforms);
-    
-    return of(mockAuthResponse);
+  // Load connected platforms for a user
+  loadConnectedPlatforms(userId: number): Promise<void> {
+    return this.apiService.get<ConnectedPlatform[]>(`${this.API_BASE}/connected/${userId}`)
+      .toPromise()
+      .then(platforms => {
+        this.connectedPlatforms.next(platforms || []);
+      })
+      .catch(error => {
+        this.toastService.error('Failed to load connected platforms');
+        console.error('Error loading platforms:', error);
+        throw error;
+      });
   }
 
-  /**
-   * Check connection status for a specific platform
-   * @param platformType - The platform to check
-   * @returns Observable with platform status
-   */
-  checkPlatformStatus(platformType: PlatformType): Observable<any> {
-    const platformStatus = this.platformsSubject.value.find(
-      p => p.name.toLowerCase() === platformType.toLowerCase()
+  // Check if a platform is connected
+  checkPlatformStatus(userId: number, platform: string): Observable<{ connected: boolean; account?: ConnectedPlatform }> {
+    return this.apiService.get<{ connected: boolean; account?: ConnectedPlatform }>(
+      `${this.API_BASE}/status/${userId}/${platform}`
     );
-    
-    return of({
-      connected: platformStatus?.isConnected || false,
-      status: platformStatus?.isConnected ? 'connected' : 'disconnected',
-      lastSynced: platformStatus?.lastSynced || null
+  }
+
+  // Connect a platform
+  connectPlatform(platformData: Omit<ConnectedPlatform, 'id'>): Promise<ConnectedPlatform> {
+    return this.apiService.post<ConnectedPlatform>(`${this.API_BASE}/connect`, platformData)
+      .toPromise()
+      .then(response => {
+        if (!response) {
+          throw new Error('No response from server');
+        }
+        const platform = response;
+        const currentPlatforms = this.connectedPlatforms.value;
+        const existingIndex = currentPlatforms.findIndex(p => p.platform === platform.platform);
+        
+        if (existingIndex >= 0) {
+          currentPlatforms[existingIndex] = platform;
+        } else {
+          currentPlatforms.push(platform);
+        }
+        
+        this.connectedPlatforms.next([...currentPlatforms]);
+        this.toastService.success(`${platform.platform} connected successfully`);
+        return platform;
+      })
+      .catch(error => {
+        this.toastService.error(`Failed to connect ${platformData.platform}`);
+        console.error('Error connecting platform:', error);
+        throw error;
+      });
+  }
+
+  // Disconnect a platform
+  disconnectPlatform(userId: number, platform: string): Promise<void> {
+    return this.apiService.delete(`${this.API_BASE}/disconnect/${userId}/${platform}`)
+      .toPromise()
+      .then(() => {
+        const currentPlatforms = this.connectedPlatforms.value;
+        const updatedPlatforms = currentPlatforms.filter(p => p.platform !== platform);
+        this.connectedPlatforms.next(updatedPlatforms);
+        this.toastService.success(`${platform} disconnected successfully`);
+      })
+      .catch(error => {
+        this.toastService.error(`Failed to disconnect ${platform}`);
+        console.error('Error disconnecting platform:', error);
+        throw error;
     });
   }
 
-  /**
-   * Disconnect a platform
-   * @param platformType - The platform to disconnect
-   * @returns Observable with disconnection result
-   */
-  disconnectPlatform(platformType: PlatformType): Observable<any> {
-    // Update the platforms list to mark the platform as disconnected
-    const updatedPlatforms = this.platformsSubject.value.map(platform => {
-      if (platform.name.toLowerCase() === platformType.toLowerCase()) {
-        return { ...platform, isConnected: false };
-      }
-      return platform;
-    });
-    
-    this.platformsSubject.next(updatedPlatforms);
-    
-    return of({ success: true, message: `${platformType} disconnected successfully` });
+  // Check if user has any connected platforms
+  hasConnectedPlatforms(): Observable<boolean> {
+    return this.connectedPlatforms.pipe(
+      map(platforms => platforms.length > 0)
+    );
   }
 }

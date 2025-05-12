@@ -50,7 +50,7 @@
       <div class="profile-image-container">
         <div class="profile-image">
           <img 
-            [src]="user?.profilePicture || 'assets/images/default-avatar.png'" 
+            [src]="user?.profile_picture || 'assets/images/default-avatar.png'" 
             alt="Profile Picture">
           <div class="image-overlay">
             <label for="profile-image-upload" class="upload-button">
@@ -90,7 +90,7 @@
         </div>
         <div class="member-since">
           <i class="fas fa-calendar"></i>
-          <span>Member since {{ user?.createdAt | date:'mediumDate' }}</span>
+          <span>Member since {{ user?.created_at | date:'mediumDate' }}</span>
         </div>
       </div>
     </div>

@@ -184,12 +184,12 @@ export class AppComponent implements OnInit, OnDestroy {
     // Update user's onboarding status in the service
     const currentUser = this.authService.getCurrentUser();
     if (currentUser) {
-      currentUser.hasCompletedOnboarding = true;
+      currentUser.has_completed_onboarding = true;
       this.authService.updateCurrentUser(currentUser);
       
       // For both new and existing users, redirect to accounts-connect
       // page if they don't have any connected platforms
-      if (!currentUser.connectedPlatforms || currentUser.connectedPlatforms.length === 0) {
+      if (!currentUser.connected_platforms || currentUser.connected_platforms.length === 0) {
         setTimeout(() => {
           this.router.navigate(['/accounts-connect']);
         }, 300);

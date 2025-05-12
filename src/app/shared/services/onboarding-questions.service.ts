@@ -65,11 +65,11 @@ export class OnboardingQuestionsService {
       // Map question type from API to our enum
       let questionType: QuestionType;
       switch (q.question_type?.toLowerCase()) {
-        case 'multi_choice':
-          questionType = QuestionType.MULTIPLE_CHOICE;
+        case 'single-select':
+          questionType = QuestionType.SINGLE_SELECT;
           break;
-        case 'multi_select':
-          questionType = QuestionType.MULTIPLE_ANSWER;
+        case 'multi-select':
+          questionType = QuestionType.MULTI_SELECT;
           break;
         default:
           questionType = QuestionType.TEXT;
@@ -115,15 +115,17 @@ export class OnboardingQuestionsService {
    * @param answers Array of answers to onboarding questions
    * @returns Observable with API response
    */
-  submitAnswers(userId: number, answers: QuestionAnswer[]): Observable<any> {
+  submitAnswers(answers: QuestionAnswer[]): Observable<any> {
     if (!answers || answers.length === 0) {
       return throwError(() => new Error('No answers provided'));
     }
 
-    const submission: OnboardingAnswerSubmission = {
-      userId: userId,
-      answers: answers
-    };
+    // const submission: OnboardingAnswerSubmission = {
+    //   userId: userId,
+    //   answers: answers
+    // };
+        const submission =  answers
+    
 
     return this.apiService.post('onboarding/answers', submission).pipe(
       tap(() => console.log('Successfully submitted onboarding answers')),
@@ -147,7 +149,7 @@ export class OnboardingQuestionsService {
     }
 
     const submission: OnboardingAnswerSubmission = {
-      userId: userId,
+      // userId: userId,
       answers: answers
     };
 

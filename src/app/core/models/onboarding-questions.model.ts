@@ -3,8 +3,8 @@
  */
 export enum QuestionType {
   TEXT = 'text',
-  MULTIPLE_CHOICE = 'multi_choice',
-  MULTIPLE_ANSWER = 'multi_select'
+  MULTI_SELECT = 'multi-select',
+  SINGLE_SELECT = 'single-select'
 }
 
 /**
@@ -34,16 +34,24 @@ export interface OnboardingQuestion {
 /**
  * Represents a user's answer to an onboarding question
  */
-export interface QuestionAnswer {
+export interface QuestionAnswer_old {
   questionId: string;
   textAnswer?: string;
   selectedOptionIds?: string[];
+}
+
+export interface QuestionAnswer {
+  question_id: any;
+  question_text: string;
+  question_type: QuestionType;
+  user_id?: string;
+  answers?: any
 }
 
 /**
  * Complete set of user answers to submit
  */
 export interface OnboardingAnswerSubmission {
-  userId: number;
+  // userId: number;
   answers: QuestionAnswer[];
 }

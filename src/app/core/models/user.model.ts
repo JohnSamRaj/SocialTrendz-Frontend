@@ -1,22 +1,24 @@
 export enum AuthProvider {
   EMAIL = 'email',
   GOOGLE = 'google',
-  APPLE = 'apple'
+  APPLE = 'apple',
 }
 
 export interface User {
-  id?: number;
+  id: number;
   full_name: string;
   email: string;
-  profilePicture?: string;
-  createdAt?: Date;
-  lastLogin?: Date;
-  authProvider?: AuthProvider;
-  isVerified?: boolean;
-  hasCompletedOnboarding?: boolean;
-  connectedPlatforms?: string[];
-  
-  // Additional profile fields
+  profile_picture?: string;
+  created_at?: string; // Use string if returned as ISO timestamp
+  last_login?: string;
+  auth_provider?: AuthProvider;
+  is_verified?: boolean;
+  has_completed_onboarding?: boolean;
+  connected_platforms?: string[];
+  token?: string;
+  refresh_token?: string;
+
+  // Optional profile fields
   bio?: string;
   location?: string;
   website?: string;
@@ -30,15 +32,22 @@ export interface AuthCredentials {
   password: string;
 }
 
-export interface RegisterCredentials extends AuthCredentials {
+export interface RegisterCredentials {
+  email: string;
+  password: string;
   full_name: string;
 }
 
 export interface OAuthCredentials {
-  providerId: string;
-  accessToken: string;
+  provider_id: string;
+  access_token: string;
   provider: AuthProvider;
   email?: string;
   full_name?: string;
-  profilePicture?: string;
+  profile_picture?: string;
+}
+
+export interface OAuthResponse {
+  user: User;
+  token: string;
 }

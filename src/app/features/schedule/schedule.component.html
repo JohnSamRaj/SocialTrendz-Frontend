@@ -113,13 +113,13 @@
           (click)="togglePostSelection(post)"
         >
           <div class="post-image">
-            <img *ngIf="post.mediaItems && post.mediaItems.length" [src]="post.mediaItems[0].url" alt="Post image">
-            <div *ngIf="!post.mediaItems || post.mediaItems.length === 0" class="no-image">
+            <img *ngIf="post.media_items && post.media_items.length" [src]="post.media_items[0].url" alt="Post image">
+            <div *ngIf="!post.media_items || post.media_items.length === 0" class="no-image">
               <i class="fas fa-image"></i>
             </div>
           </div>
           <div class="post-info">
-            <h4>{{ post.caption.substring(0, 30) }}{{ post.caption.length > 30 ? '...' : '' }}</h4>
+            <h4>{{ post.description.substring(0, 30) }}{{ post.description.length > 30 ? '...' : '' }}</h4>
             <span class="post-status" [class]="post.status">{{ post.status }}</span>
           </div>
           <div class="selection-indicator">
@@ -188,8 +188,8 @@
       
       <div class="post-preview">
         <div class="post-media">
-          <img *ngIf="selectedPost.mediaItems && selectedPost.mediaItems.length" [src]="selectedPost.mediaItems[0].url" alt="Post media">
-          <div *ngIf="!selectedPost.mediaItems || selectedPost.mediaItems.length === 0" class="no-image">
+          <img *ngIf="selectedPost.media_items && selectedPost.media_items.length" [src]="selectedPost.media_items[0].url" alt="Post media">
+          <div *ngIf="!selectedPost.media_items || selectedPost.media_items.length === 0" class="no-image">
             <i class="fas fa-image"></i>
           </div>
         </div>
@@ -199,14 +199,14 @@
             {{ selectedPost.status }}
           </div>
           
-          <div class="post-schedule-time" *ngIf="selectedPost.scheduledFor">
+          <div class="post-schedule-time" *ngIf="selectedPost.scheduled_at">
             <i class="fas fa-clock"></i>
-            <span>Scheduled for: {{ selectedPost.scheduledFor | date:'medium' }}</span>
+            <span>Scheduled for: {{ selectedPost.scheduled_at | date:'medium' }}</span>
           </div>
           
-          <div class="post-caption">
+          <div class="post-description">
             <h3>Caption</h3>
-            <p>{{ selectedPost.caption }}</p>
+            <p>{{ selectedPost.description }}</p>
           </div>
           
           <div class="post-hashtags" *ngIf="selectedPost.hashtags && selectedPost.hashtags.length > 0">

@@ -11,12 +11,22 @@ import { Post, DraftPost, PostStatus } from '../models/post.model';
 import { ConnectedAccount } from '../models/connected-account.model';
 import { AnalyticsOverview } from '../models/analytics.model';
 import { DataService } from './data.service';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class InstagramService {
-  constructor(private dataService: DataService) {}
+  constructor(
+    private dataService: DataService,
+    private authService: AuthService
+  ) {}
+
+  private getCurrentUserId(): number {
+    const user = this.authService.getCurrentUser();
+    if (!user?.id) throw new Error('No authenticated user or invalid user ID');
+    return user.id;
+  }
 
   // Post Management Methods
 
@@ -25,7 +35,7 @@ export class InstagramService {
    * @returns Observable of posts array
    */
   getPosts(): Observable<Post[]> {
-    return this.dataService.getPosts();
+    return this.dataService.getPosts(this.getCurrentUserId());
   }
   
   /**
@@ -33,7 +43,7 @@ export class InstagramService {
    * @returns Observable of published posts
    */
   getPublishedPosts(): Observable<Post[]> {
-    return this.dataService.getPosts().pipe(
+    return this.dataService.getPosts(this.getCurrentUserId()).pipe(
       map(posts => posts.filter(post => post.status === PostStatus.PUBLISHED))
     );
   }
@@ -43,7 +53,7 @@ export class InstagramService {
    * @returns Observable of draft posts
    */
   getDraftPosts(): Observable<Post[]> {
-    return this.dataService.getPosts().pipe(
+    return this.dataService.getPosts(this.getCurrentUserId()).pipe(
       map(posts => posts.filter(post => post.status === PostStatus.DRAFT))
     );
   }
@@ -53,12 +63,12 @@ export class InstagramService {
    * @returns Observable of scheduled posts
    */
   getScheduledPosts(): Observable<Post[]> {
-    return this.dataService.getPosts().pipe(
+    return this.dataService.getPosts(this.getCurrentUserId()).pipe(
       map(posts => posts
         .filter(post => post.status === PostStatus.SCHEDULED)
         .sort((a, b) => {
-          if (!a.scheduledFor || !b.scheduledFor) return 0;
-          return a.scheduledFor.getTime() - b.scheduledFor.getTime();
+          if (!a.scheduled_at || !b.scheduled_at) return 0;
+          return a.scheduled_at.getTime() - b.scheduled_at.getTime();
         })
       )
     );
@@ -69,7 +79,7 @@ export class InstagramService {
    * @param postId Post identifier
    * @returns Observable with post or undefined
    */
-  getPostById(postId: string): Observable<Post | undefined> {
+  getPostById(postId: string): Observable<Post> {
     return this.dataService.getPostById(postId);
   }
 
@@ -102,7 +112,7 @@ export class InstagramService {
    * @param postId Post identifier
    * @returns Observable indicating success
    */
-  deletePost(postId: string): Observable<boolean> {
+  deletePost(postId: string): Observable<unknown> {
     return this.dataService.deletePost(postId);
   }
 
@@ -132,7 +142,7 @@ export class InstagramService {
    * @returns Observable with connected accounts
    */
   getConnectedAccounts(): Observable<ConnectedAccount[]> {
-    return this.dataService.getConnectedAccounts();
+    return this.dataService.getConnectedAccounts(this.getCurrentUserId());
   }
 
   /**
@@ -140,7 +150,7 @@ export class InstagramService {
    * @returns Observable with Instagram accounts
    */
   getInstagramAccounts(): Observable<ConnectedAccount[]> {
-    return this.dataService.getConnectedAccounts().pipe(
+    return this.dataService.getConnectedAccounts(this.getCurrentUserId()).pipe(
       map(accounts => accounts.filter(account => account.platform === 'instagram'))
     );
   }
@@ -150,6 +160,11 @@ export class InstagramService {
    * @returns Observable with analytics data
    */
   getInstagramInsights(): Observable<AnalyticsOverview> {
-    return this.dataService.getAnalytics();
+    const userId = this.getCurrentUserId();
+    const timeframe = {
+      start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
+      end: new Date()
+    };
+    return this.dataService.getAnalytics(userId, timeframe);
   }
 }

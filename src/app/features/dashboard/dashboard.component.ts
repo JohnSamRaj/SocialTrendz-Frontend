@@ -74,8 +74,8 @@ export class DashboardComponent implements OnInit {
         this.recentPosts = posts
           .filter(post => post.status === PostStatus.PUBLISHED)
           .sort((a, b) => 
-            (new Date(b.publishedAt || 0)).getTime() - 
-            (new Date(a.publishedAt || 0)).getTime()
+            (new Date(b.published_at || 0)).getTime() - 
+            (new Date(a.published_at || 0)).getTime()
           )
           .slice(0, 4);
 
@@ -86,8 +86,8 @@ export class DashboardComponent implements OnInit {
         this.scheduledPosts = posts
           .filter(post => post.status === PostStatus.SCHEDULED)
           .sort((a, b) => 
-            (new Date(a.scheduledFor || 0)).getTime() - 
-            (new Date(b.scheduledFor || 0)).getTime()
+            (new Date(a.scheduled_at || 0)).getTime() - 
+            (new Date(b.scheduled_at || 0)).getTime()
           )
           .slice(0, 3);
 
@@ -229,7 +229,7 @@ export class DashboardComponent implements OnInit {
     // Update user's onboarding status in the service
     const currentUser = this.authService.getCurrentUser();
     if (currentUser) {
-      currentUser.hasCompletedOnboarding = true;
+      currentUser.has_completed_onboarding = true;
       this.authService.updateCurrentUser(currentUser);
       this.toastService.success('Onboarding completed successfully!');
     }
@@ -287,7 +287,7 @@ export class DashboardComponent implements OnInit {
     
     // Always show onboarding modal for new users
     const currentUser = this.authService.getCurrentUser();
-    if (currentUser && !currentUser.hasCompletedOnboarding) {
+    if (currentUser && !currentUser.has_completed_onboarding) {
       // Show the onboarding modal after a short delay to ensure the page is fully loaded
       setTimeout(() => {
         this.isOnboardingModalVisible = true;

@@ -53,7 +53,7 @@
               <app-skeleton-loader type="text" width="120px" height="16px"></app-skeleton-loader>
             </div>
             <app-skeleton-loader type="card" height="300px"></app-skeleton-loader>
-            <div class="preview-caption">
+            <div class="preview-description">
               <app-skeleton-loader type="text" width="90%"></app-skeleton-loader>
               <app-skeleton-loader type="text" width="80%"></app-skeleton-loader>
               <app-skeleton-loader type="text" width="50%"></app-skeleton-loader>
@@ -87,11 +87,11 @@
       <div class="form-section post-preview-section">
         <h3>Post Preview</h3>
         <app-instagram-preview
-          [caption]="newPost.caption"
+          [description]="newPost.description"
           [hashtags]="newPost.hashtags"
-          [mediaItems]="newPost.mediaItems"
-          [username]="username"
-          [userProfileImage]="profileImage"
+          [media_items]="newPost.media_items"
+          [user_name]="user_name"
+          [user_profile_image]="user_profile_image"
         ></app-instagram-preview>
       </div>
 
@@ -158,12 +158,18 @@
             </div>
           </div>
 
-          <div class="platform-accounts" *ngIf="connectedAccounts.length > 0">
-            <div class="connected-account" *ngFor="let account of connectedAccounts; trackBy: trackByAccountId">
-              <img [appLazyLoadImage]="account.profilePicture || 'assets/images/default-profile.svg'" alt="Profile picture" class="account-image">
-              <div class="account-info">
-                <span class="account-name">{{ account.displayName || account.username }}</span>
-                <span class="account-platform">{{ account.platform }}</span>
+          <!-- Account selection -->
+          <div class="account-selection" *ngIf="connectedAccounts.length > 0">
+            <div class="account-list">
+              <div class="account-item" *ngFor="let account of connectedAccounts; trackBy: trackByAccountId"
+                   [class.selected]="selectedAccount?.id === account.id"
+                   (click)="selectAccount(account)">
+                <img [src]="getAccountProfilePicture(account)" 
+                     [alt]="getAccountDisplayName(account)"
+                     class="account-avatar"
+                     [defaultImage]="'assets/images/default-profile.svg'"
+                     [lazyLoad]="getAccountProfilePicture(account)">
+                <span class="account-name">{{ getAccountDisplayName(account) }}</span>
               </div>
             </div>
           </div>
@@ -172,7 +178,7 @@
         
       <div class="form-section">
         <h3>Media</h3>
-        <div class="media-upload-area" [class.has-error]="mediaUploadError" *ngIf="newPost.mediaItems.length === 0">
+        <div class="media-upload-area" [class.has-error]="mediaUploadError" *ngIf="newPost.media_items.length === 0">
           <input 
             type="file" 
             id="media-upload" 
@@ -191,9 +197,9 @@
         </div>
 
         <!-- Media Preview -->
-        <div class="media-preview-container" *ngIf="newPost.mediaItems.length > 0">
+        <div class="media-preview-container" *ngIf="newPost.media_items.length > 0">
           <div class="media-items">
-            <div class="media-item" *ngFor="let item of newPost.mediaItems; let i = index; trackBy: trackByIndex">
+            <div class="media-item" *ngFor="let item of newPost.media_items; let i = index; trackBy: trackByIndex">
               <div class="media-wrapper">
                 <img *ngIf="item.type === 'image'" [appLazyLoadImage]="item.url" alt="Media preview">
                 <video *ngIf="item.type === 'video'" [src]="item.url" controls></video>
@@ -229,32 +235,32 @@
       <!-- Caption Section -->
       <div class="form-section">
         <div class="section-header">
-          <h3>Caption</h3>
+          <h3>Description</h3>
           <button 
             class="ai-generate-btn" 
-            (click)="generateCaption()" 
-            [disabled]="isGeneratingCaption"
+            (click)="generateDescription()" 
+            [disabled]="isGeneratingDescription"
           >
-            <i class="fas" [class.fa-robot]="!isGeneratingCaption" [class.fa-spinner]="isGeneratingCaption" [class.fa-spin]="isGeneratingCaption"></i>
-            {{ isGeneratingCaption ? 'Generating...' : 'Generate with AI' }}
+            <i class="fas" [class.fa-robot]="!isGeneratingDescription" [class.fa-spinner]="isGeneratingDescription" [class.fa-spin]="isGeneratingDescription"></i>
+            {{ isGeneratingDescription ? 'Generating...' : 'Generate with AI' }}
           </button>
         </div>
         
         <textarea 
-          class="caption-textarea" 
-          placeholder="Write a caption for your post..."
-          [(ngModel)]="newPost.caption"
+          class="description-textarea" 
+          placeholder="Write a description for your post..."
+          [(ngModel)]="newPost.description"
           rows="5"
         ></textarea>
         
         <!-- AI Caption Suggestions -->
-        <div class="ai-suggestions" *ngIf="aiCaptionSuggestions.length > 0">
+        <div class="ai-suggestions" *ngIf="aiDescriptionSuggestions.length > 0">
           <h4>AI Suggestions:</h4>
           <div class="suggestions-list">
             <div 
               class="suggestion-item" 
-              *ngFor="let suggestion of aiCaptionSuggestions"
-              (click)="selectAlternativeCaption(suggestion)"
+              *ngFor="let suggestion of aiDescriptionSuggestions"
+              (click)="selectAlternativeDescription(suggestion)"
             >
               <i class="fas fa-lightbulb"></i>
               <p>{{ suggestion }}</p>
@@ -279,9 +285,9 @@
         
         <textarea 
           class="hashtags-textarea" 
-          placeholder="Enter hashtags separated by spaces..."
+          placeholder="Enter hashtags, separated by commas (e.g. tag1, tag2, tag3)"
           [(ngModel)]="hashtags"
-          (blur)="updateHashtags()"
+          (input)="updateHashtags()"
           rows="3"
         ></textarea>
         

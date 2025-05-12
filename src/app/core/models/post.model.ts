@@ -22,18 +22,21 @@ export interface MediaItem {
 
 export interface Post {
   id: string;
-  caption: string;
-  mediaItems: MediaItem[];
+  user_id: number;
+  title: string;
+  description: string;
+  media_items: MediaItem[];
+  image_urls: string[];
   hashtags: string[];
+  platform: 'instagram' | 'facebook' | 'twitter' | 'linkedin';
+  scheduled_at?: Date;
+  is_draft: boolean;
   status: PostStatus;
   type: PostType;
-  scheduledFor?: Date;
-  publishedAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  published_at?: Date;
+  created_at: Date;
+  updated_at: Date;
   location?: string;
-  userId: number;
-  platform: 'instagram' | 'facebook' | 'twitter' | 'linkedin';
   engagement?: PostEngagement;
 }
 
@@ -47,12 +50,15 @@ export interface PostEngagement {
 }
 
 export interface DraftPost {
-  caption: string;
-  mediaItems: MediaItem[];
+  user_id: number;
+  title: string;
+  description: string;
+  media_items: MediaItem[];
+  image_urls: string[];
   hashtags: string[];
+  platform: 'instagram' | 'facebook' | 'twitter' | 'linkedin';
+  scheduled_at?: Date;
+  is_draft: boolean;
   type: PostType;
   location?: string;
-  scheduledFor?: Date;
-  userId: number;
-  platform: 'instagram' | 'facebook' | 'twitter' | 'linkedin';
 }

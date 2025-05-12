@@ -84,7 +84,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         });
         
         // Check if user's email is verified
-        this.isEmailVerified = currentUser.isVerified || false;
+        this.isEmailVerified = currentUser.is_verified || false;
       }
       
       // End loading state
@@ -174,7 +174,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         // Update the current user's verified status
         const currentUser = this.authService.getCurrentUser();
         if (currentUser) {
-          currentUser.isVerified = true;
+          currentUser.is_verified = true;
           this.authService.updateCurrentUser(currentUser);
         }
       } else {

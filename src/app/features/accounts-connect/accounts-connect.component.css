@@ -415,3 +415,26 @@ button.secondary:hover {
     margin-bottom: 1rem;
   }
 }
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 14px;
+  color: #4CAF50;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-indicator.connected {
+  background-color: #4CAF50;
+}
+
+.status-text {
+  font-weight: 500;
+}

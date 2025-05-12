@@ -89,13 +89,13 @@ export class OnboardingModalComponent implements OnInit {
 
       // Create different form structure based on question type
       switch (question.type) {
-        case QuestionType.MULTIPLE_CHOICE:
+        case QuestionType.SINGLE_SELECT:
           form = this.fb.group({
             questionId: [question.id],
             selectedOptionId: ['', question.required ? Validators.required : null]
           });
           break;
-        case QuestionType.MULTIPLE_ANSWER:
+        case QuestionType.MULTI_SELECT:
           // For multiple answer questions, create a FormArray with controls for each option
           const optionsControls: { optionId: string; selected: boolean }[] = [];
           
@@ -146,9 +146,19 @@ export class OnboardingModalComponent implements OnInit {
     this.onboardingService.loadQuestions()
       .pipe(finalize(() => this.isLoading = false))
       .subscribe({
-        next: (questions: OnboardingQuestion[]) => {
+        next: (questions: any[]) => {
           if (questions && questions.length > 0) {
-            this.questions = questions;
+
+            this.questions = questions.map(q => ({
+              q:q,
+              id: q.id,
+              text: q.text,
+              type: this.mapAnswerTypeToEnum(q.type),
+              required: true, // or set based on backend if available
+              description: q.description || '',
+              options: q.options || []
+            }));
+            console.log("questions ",this.questions);
             this.totalQuestions = this.questions.length;
             this.initializeFormGroups();
           } else {
@@ -160,6 +170,19 @@ export class OnboardingModalComponent implements OnInit {
           this.errorMessage = 'Failed to load onboarding questions. Please try again later.';
         }
       });
+  }
+
+
+  private mapAnswerTypeToEnum(answerType: string): QuestionType {
+    switch (answerType) {
+      case 'single-select':
+        return QuestionType.SINGLE_SELECT;
+      case 'multi-select':
+        return QuestionType.MULTI_SELECT;
+      case 'text':
+      default:
+        return QuestionType.TEXT;
+    }
   }
 
   /**
@@ -221,7 +244,7 @@ export class OnboardingModalComponent implements OnInit {
    */
   nextQuestion(): void {
     // For multiple answer questions, check if at least one option is selected
-    if (this.currentQuestion.type === QuestionType.MULTIPLE_ANSWER) {
+    if (this.currentQuestion.type === QuestionType.MULTI_SELECT) {
       this.validateMultipleAnswerSelection();
     }
 
@@ -273,6 +296,11 @@ export class OnboardingModalComponent implements OnInit {
     this.currentForm.patchValue({
       selectedOptionId: optionId
     });
+
+    if (this.currentQuestion.type === QuestionType.SINGLE_SELECT) {
+      // give Angular a tick to update the form state, then advance
+      setTimeout(() => this.nextQuestion(), 0);
+    }
   }
 
   /**
@@ -302,13 +330,13 @@ export class OnboardingModalComponent implements OnInit {
   skipQuestion(): void {
     if (this.currentQuestion.required) {
       switch (this.currentQuestion.type) {
-        case QuestionType.MULTIPLE_CHOICE:
+        case QuestionType.SINGLE_SELECT:
           // Select the first option by default for required multiple choice questions
           if (this.currentQuestion.options && this.currentQuestion.options.length > 0) {
             this.selectOption(this.currentQuestion.options[0].id);
           }
           break;
-        case QuestionType.MULTIPLE_ANSWER:
+        case QuestionType.MULTI_SELECT:
           // Select the first option by default for required multiple answer questions
           if (this.currentQuestion.options && this.currentQuestion.options.length > 0) {
             this.toggleOptionSelection(0);
@@ -342,18 +370,20 @@ export class OnboardingModalComponent implements OnInit {
     
     // Prepare answers for submission
     const answers: QuestionAnswer[] = this.prepareAnswersForSubmission();
+    // console.log("answers *************",answers);
 
     // Get user ID from auth service
     const currentUser = this.authService.getCurrentUser();
     const userId = currentUser?.id || 0;
+    console.log("answers *************",answers,userId);
 
-    if (userId === 0) {
-      console.error('No user ID available');
-      this.isLoading = false;
-      return;
-    }
+    // if (userId === 0) {
+    //   console.error('No user ID available');
+    //   this.isLoading = false;
+    //   return;
+    // }
 
-    this.onboardingService.submitAnswers(userId, answers)
+    this.onboardingService.submitAnswers(answers)
       .pipe(finalize(() => this.isLoading = false))
       .subscribe({
         next: () => {
@@ -379,30 +409,53 @@ export class OnboardingModalComponent implements OnInit {
    */
   private prepareAnswersForSubmission(): QuestionAnswer[] {
     const answers: QuestionAnswer[] = [];
+    const currentUser = this.authService.getCurrentUser();
+    const userId = currentUser?.id || 0;
 
     this.questionForms.forEach((form, index) => {
       const question = this.questions[index];
-      const answer: QuestionAnswer = {
-        questionId: question.id
+      const ans: QuestionAnswer = {
+        question_id:   question.id,
+        question_text: question.text,
+        question_type: question.type,
+        user_id: userId.toString(),
+        answers:       []                             // we'll fill this below
       };
 
       switch (question.type) {
-        case QuestionType.MULTIPLE_CHOICE:
-          answer.selectedOptionIds = [form.get('selectedOptionId')?.value];
+        case QuestionType.SINGLE_SELECT:
+          const selectedId = form.get('selectedOptionId')!.value;
+
+          const selectedOpt = question.options?.find(o => o.id === selectedId);
+          ans.answers = [{
+            option_id:   selectedId,
+            answer_text: selectedOpt?.text || ''
+          }];
           break;
-        case QuestionType.MULTIPLE_ANSWER:
-          const optionsArray = this.getOptionsArray(form);
-          answer.selectedOptionIds = optionsArray.controls
-            .filter(control => control.get('selected')?.value === true)
-            .map(control => control.get('optionId')?.value);
-          break;
+        case QuestionType.MULTI_SELECT:
+          const optsArray = this.getOptionsArray(form);
+          ans.answers = optsArray.controls
+          .filter(c => c.get('selected')!.value)
+          .map(c => {
+            const id = c.get('optionId')!.value;
+            // find the matching QuestionOption to grab its text
+            const opt = question.options?.find(o => o.id === id);
+            return {
+              option_id:   id,
+              answer_text: opt?.text || ''
+            };
+          });
+        break;
         case QuestionType.TEXT:
-        default:
-          answer.textAnswer = form.get('textAnswer')?.value;
-          break;
+          default:
+            ans.answers = [{
+              option_id:   undefined,         // not used
+              answer_text: form.get('textAnswer')!.value
+            }];
+            break;
       }
 
-      answers.push(answer);
+      answers.push(ans);
     });
 
     return answers;

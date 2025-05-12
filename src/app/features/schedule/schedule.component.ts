@@ -140,7 +140,7 @@ export class ScheduleComponent implements OnInit {
     if (!this.selectedDate) return [];
     
     return this.posts.filter(post => {
-      const targetDate = post.scheduledFor || post.publishedAt;
+      const targetDate = post.scheduled_at || post.published_at;
       if (!targetDate) return false;
       
       const postDate = new Date(targetDate);
