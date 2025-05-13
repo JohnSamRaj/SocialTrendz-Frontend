@@ -87,11 +87,10 @@
       <div class="form-section post-preview-section">
         <h3>Post Preview</h3>
         <app-instagram-preview
+          [user]="currentUser"
+          [media_items]="newPost.media_items"
           [description]="newPost.description"
           [hashtags]="newPost.hashtags"
-          [media_items]="newPost.media_items"
-          [user_name]="user_name"
-          [user_profile_image]="user_profile_image"
         ></app-instagram-preview>
       </div>
 

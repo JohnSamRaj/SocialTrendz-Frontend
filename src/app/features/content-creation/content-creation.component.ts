@@ -17,6 +17,7 @@ import { ApiService } from '../../core/services/api.service';
 import { DataService } from '../../core/services/data.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { LazyLoadImageModule } from 'ng-lazyload-image';
+import { User } from '../../core/models/user.model';
 
 
 interface BackendPost {
@@ -136,6 +137,8 @@ export class ContentCreationComponent implements OnInit {
   selectedAccount: ConnectedAccount | null = null;
   loading = false;
 
+  currentUser: User | null = null;
+
   constructor(
     private instagramService: InstagramService,
     private aiService: AIService,
@@ -197,6 +200,8 @@ export class ContentCreationComponent implements OnInit {
     setTimeout(() => {
       document.dispatchEvent(new CustomEvent('content-creation-loaded'));
     }, 100);
+
+    this.currentUser = this.authService.getCurrentUser();
   }
   
   /**
@@ -620,85 +625,68 @@ export class ContentCreationComponent implements OnInit {
     this.isSaving = true;
     const postData = {
       user_id: this.newPost.user_id,
-      description: this.newPost.description,
-      imageUrl: this.newPost.media_items[0]?.url, // Ensure image exists
+      caption: this.newPost.description,
+      imageUrl: this.newPost.media_items[0]?.url,
     };
 
-    // First check if user is authenticated
-    this.socialAccountsService.getConnectedAccounts().subscribe({
-      next: (accounts) => {
-        const instagramAccount = accounts.find(acc => acc.platform === 'instagram');
-        if (!instagramAccount) {
-          this.toastService.error('Please connect your Instagram account first');
-          this.router.navigate(['/settings/connections']);
-          this.isSaving = false;
-          this.cdr.markForCheck();
-          return;
+    // Directly publish post without checking Instagram connection
+    this.apiService.post<BackendPostResponse>('post/publish', postData).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.toastService.success('Post published successfully');
+          this.resetForm();
+          this.loadDrafts();
+        } else {
+          this.handlePublishError(response.error || 'Failed to publish post');
         }
-
-        // If authenticated, proceed with publishing
-        this.apiService.post<BackendPostResponse>('posts/publish', postData).subscribe({
-          next: (response) => {
-            if (response.success) {
-              this.toastService.success('Post published successfully');
-              this.resetForm();
-              this.loadDrafts();
-            } else {
-              this.toastService.error(response.error || 'Failed to publish post');
-            }
-            this.isSaving = false;
-            this.cdr.markForCheck();
-          },
-          error: (error) => {
-            console.error('Publish Error:', error);
-            let errorMessage = 'Failed to publish post';
-            
-            // Handle HTML response (Facebook error page)
-            if (error.error && typeof error.error === 'string' && error.error.includes('<!DOCTYPE html>')) {
-              errorMessage = 'Authentication failed. Please reconnect your Instagram account.';
-              this.router.navigate(['/settings/connections']);
-            }
-            // Handle authentication errors
-            else if (error.error?.code === 'AUTH_ERROR' || error.status === 401) {
-              errorMessage = 'Authentication failed. Please reconnect your Instagram account.';
-              this.router.navigate(['/settings/connections']);
-            }
-            // Handle connection errors
-            else if (error.error?.code === 'CONNECTION_ERROR' || error.status === 0) {
-              errorMessage = 'Connection to Instagram failed. Please check your internet connection and try again.';
-            }
-            // Handle specific Facebook API errors
-            else if (error.error?.code) {
-              switch (error.error.code) {
-                case 190:
-                  errorMessage = 'Invalid or expired access token. Please reconnect your Instagram account.';
-                  this.router.navigate(['/settings/connections']);
-                  break;
-                case 100:
-                  errorMessage = 'Invalid parameter. Please check your post content.';
-                  break;
-                case 200:
-                  errorMessage = 'Permission error. Please check your Instagram account permissions.';
-                  this.router.navigate(['/settings/connections']);
-                  break;
-                default:
-                  errorMessage = error.error.message || errorMessage;
-              }
-            }
-            
-            this.toastService.error(errorMessage);
-            this.isSaving = false;
-            this.cdr.markForCheck();
-          }
-        });
-      },
-      error: (error) => {
-        console.error('Account Check Error:', error);
-        this.toastService.error('Failed to check account connection status');
         this.isSaving = false;
         this.cdr.markForCheck();
-      }
+      },
+      error: (error) => this.handleApiError(error)
     });
+  }
+  
+  private handlePublishError(message: string, redirectToConnections: boolean = false) {
+    this.toastService.error(message);
+    if (redirectToConnections) {
+      this.router.navigate(['/accounts-connect']);
+    }
+    this.isSaving = false;
+    this.cdr.markForCheck();
+  }
+  
+  private handleApiError(error: any) {
+    let errorMessage = 'Failed to publish post';
+
+    if (typeof error.error === 'string' && error.error.includes('<!DOCTYPE html>')) {
+      errorMessage = 'Authentication failed. Please reconnect your Instagram account.';
+      this.router.navigate(['/accounts-connect']);
+    } else if (error.error?.code === 'AUTH_ERROR' || error.status === 401) {
+      errorMessage = 'Authentication failed. Please reconnect your Instagram account.';
+      this.router.navigate(['/accounts-connect']);
+    } else if (error.error?.code === 'CONNECTION_ERROR' || error.status === 0) {
+      errorMessage = 'Connection to Instagram failed. Please check your internet connection and try again.';
+    } else if (error.error?.code) {
+      switch (error.error.code) {
+        case 190:
+          errorMessage = 'Invalid or expired access token. Please reconnect your Instagram account.';
+          this.router.navigate(['/accounts-connect']);
+          break;
+        case 100:
+          errorMessage = 'Invalid parameter. Please check your post content.';
+          break;
+        case 200:
+          errorMessage = 'Permission error. Please check your Instagram account permissions.';
+          this.router.navigate(['/accounts-connect']);
+          break;
+        default:
+          errorMessage = error.error.message || errorMessage;
+      }
+    }
+
+    this.toastService.error(errorMessage);
+    this.isSaving = false;
+    this.cdr.markForCheck();
   }
   
   validateForm(): boolean {

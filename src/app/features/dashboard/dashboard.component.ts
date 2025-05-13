@@ -11,6 +11,7 @@ import { OnboardingModalComponent } from '../../shared/components/onboarding-mod
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
 import { SkeletonCardComponent } from '../../shared/components/skeleton-card/skeleton-card.component';
 import { ToastService } from '../../shared/services/toast.service';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',

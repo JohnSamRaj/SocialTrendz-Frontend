@@ -48,8 +48,25 @@ export class AccountsConnectComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       const platform = params['platform'] as SupportedPlatform;
       if (platform && params['connected']) {
+        // Get platform user data from response
+        const platformUserData = {
+          user_name: params['user_name'],
+          profile_picture: params['profile_picture']
+        };
+
+        // Update current user with platform data
+        const currentUser = this.authService.getCurrentUser();
+        if (currentUser) {
+          const updatedUser = {
+            ...currentUser,
+            [`${platform}_user_name`]: platformUserData.user_name,
+            [`${platform}_profile_picture`]: platformUserData.profile_picture
+          };
+          this.authService.updateCurrentUser(updatedUser);
+        }
+
         // Show success message
-        this.toastService.info(`${platform.charAt(0).toUpperCase() + platform.slice(1)} Connected Successfully!`);
+        this.toastService.success(`${platform.charAt(0).toUpperCase() + platform.slice(1)} Connected Successfully!`);
         
         // Clean up the URL by removing both query params and hash
         const cleanUrl = window.location.pathname;
@@ -57,6 +74,9 @@ export class AccountsConnectComponent implements OnInit {
         
         // Refresh the platforms list
         this.loadAvailablePlatforms();
+
+        // Redirect to dashboard
+        this.router.navigate(['/dashboard']);
       } else if (params['error']) {
         this.toastService.error(`Connection failed: ${params['error']}`);
         // Clean up the URL
@@ -168,12 +188,17 @@ export class AccountsConnectComponent implements OnInit {
     try {
       this.connectingPlatform = true;
       const platformId = this.selectedPlatform.id as SupportedPlatform;
+      const currentUser = this.authService.getCurrentUser();
+      
+      if (!currentUser?.refresh_token) {
+        throw new Error('No refresh token available');
+      }
       
       // Show loading toast
       this.toastService.info(`Connecting to ${this.selectedPlatform.name}...`);
       
-      // Redirect to platform auth
-      window.location.href = `${environment.apiUrl}/auth/${platformId}`;
+      // Redirect to platform auth with refresh token
+      window.location.href = `${environment.apiUrl}/auth/${platformId}?refresh_token=${currentUser.refresh_token}`;
     } catch (error) {
       console.error(`Error connecting to ${this.selectedPlatform.name}:`, error);
       this.toastService.error(`Failed to connect to ${this.selectedPlatform.name}. Please try again.`);

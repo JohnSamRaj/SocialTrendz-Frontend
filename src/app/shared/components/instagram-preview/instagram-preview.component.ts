@@ -2,6 +2,7 @@ import { Component, Input, OnChanges, SimpleChanges, ChangeDetectorRef, ChangeDe
 import { CommonModule } from '@angular/common';
 import { MediaItem } from '../../../core/models/post.model';
 import { LazyLoadImageDirective } from '../../directives/lazy-load-image.directive';
+import { User } from '../../../core/models/user.model';
 
 @Component({
   selector: 'app-instagram-preview',
@@ -14,9 +15,8 @@ import { LazyLoadImageDirective } from '../../directives/lazy-load-image.directi
 export class InstagramPreviewComponent implements OnChanges {
   @Input() hashtags: string[] = [];
   @Input() media_items: MediaItem[] = [];
-  @Input() user_name: string = 'user_name';
-  @Input() user_profile_image: string = 'assets/images/default-profile.png';
   @Input() description: string = '';
+  @Input() user: User | null = null;
   
   formattedCaption: string = '';
   formattedHashtags: string = '';
@@ -110,5 +110,13 @@ export class InstagramPreviewComponent implements OnChanges {
    */
   trackByMediaId(index: number, item: MediaItem): string {
     return item.id;
+  }
+
+  get instagram_user_name(): string {
+    return this.user?.instagram_user_name || 'user_name';
+  }
+
+  get instagram_profile_picture(): string {
+    return this.user?.instagram_profile_picture || 'assets/images/default-profile.png';
   }
 }

@@ -1,8 +1,8 @@
 <div class="instagram-preview">
   <!-- Post Header -->
   <div class="instagram-header">
-    <img [appLazyLoadImage]="user_profile_image" alt="Profile" class="profile-img">
-    <div class="username">{{ user_name }}</div>
+    <img [appLazyLoadImage]="instagram_profile_picture" alt="Profile" class="profile-img">
+    <div class="username">{{ instagram_user_name }}</div>
     <div class="more-options">
       <i class="fas fa-ellipsis-h"></i>
     </div>
@@ -85,7 +85,7 @@
   
   <!-- Caption -->
   <div *ngIf="formattedCaption" class="post-caption">
-    <span class="caption-username">{{ user_name }}</span>
+    <span class="caption-username">{{ instagram_user_name }}</span>
     {{ formattedCaption }}
   </div>
   

@@ -20,7 +20,7 @@ import { AuthService } from '../auth/auth.service';
 export class SocialAccountsApiService {
   private readonly CONNECTED_ACCOUNTS_CACHE_KEY = 'connected_accounts';
   private readonly CONNECTED_ACCOUNTS_CACHE_TIME = 5 * 60 * 1000; // 5 minutes
-  private readonly API_BASE = '/api/social-accounts';
+  private readonly API_BASE = 'auth/instagram';
 
   private accountsCache$: Observable<ConnectedAccount[]> | null = null;
 
@@ -46,8 +46,12 @@ export class SocialAccountsApiService {
     }
 
     this.accountsCache$ = this.apiService.getCached<ConnectedAccount[]>(
-      `${this.API_BASE}/connected/${userId}`,
-      {}, 
+      `${this.API_BASE}/status`,
+      {
+        headers: {
+          Authorization: `Bearer ${userId}`
+        }
+      }, 
       this.CONNECTED_ACCOUNTS_CACHE_TIME
     ).pipe(
       map(accounts => accounts.map(mapBackendToFrontendAccount)),

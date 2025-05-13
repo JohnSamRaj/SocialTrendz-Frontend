@@ -9,7 +9,7 @@ export interface User {
   full_name: string;
   email: string;
   profile_picture?: string;
-  created_at?: string; // Use string if returned as ISO timestamp
+  created_at?: string;
   last_login?: string;
   auth_provider?: AuthProvider;
   is_verified?: boolean;
@@ -17,6 +17,16 @@ export interface User {
   connected_platforms?: string[];
   token?: string;
   refresh_token?: string;
+
+  // Platform-specific fields
+  instagram_user_name?: string;
+  instagram_profile_picture?: string;
+  facebook_user_name?: string;
+  facebook_profile_picture?: string;
+  twitter_username?: string;
+  twitter_profile_picture?: string;
+  linkedin_username?: string;
+  linkedin_profile_picture?: string;
 
   // Optional profile fields
   bio?: string;
