@@ -26,18 +26,23 @@ export class ApiService {
   /**
    * Create HTTP headers with auth token
    */
-  private createHeaders(): HttpHeaders {
+  private createHeaders(isFormData: boolean = false): HttpHeaders {
     const token = this.getAuthToken();
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json'
-    });
-
+    let headers = new HttpHeaders();
+  
+    // Set Authorization header if a token exists
     if (token) {
       headers = headers.set('Authorization', `Bearer ${token}`);
     }
-
+  
+    // If not uploading FormData, set Content-Type as application/json by default
+    if (!isFormData) {
+      headers = headers.set('Content-Type', 'application/json');
+    }
+  
     return headers;
   }
+  
 
   /**
    * Handle API errors
@@ -110,8 +115,9 @@ export class ApiService {
   /**
    * HTTP POST request
    */
-  post<T>(endpoint: string, data: any): Observable<T> {
-    const headers = this.createHeaders();
+  post<T>(endpoint: string, data: any, isFormData: boolean = false): Observable<T> {
+    const headers = this.createHeaders(isFormData);
+    console.log(headers);
     return this.http.post<T>(`${this.apiUrl}/${endpoint}`, data, { headers })
       .pipe(
         catchError(error => this.handleError(error))

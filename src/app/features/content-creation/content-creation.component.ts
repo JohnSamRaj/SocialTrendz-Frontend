@@ -619,31 +619,65 @@ export class ContentCreationComponent implements OnInit {
     });
   }
   
+  async uploadImageToPublicUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const formData = new FormData();
+      formData.append('image', file.name);
+      console.log('Uploading file:', file.name);
+      console.log('File:', file);
+      console.log('Form data:', formData);
+
+      // Upload to your backend's image upload endpoint
+      this.apiService.post<{ url: string }>('upload-image', formData).subscribe({
+        next: (response) => {
+          resolve(response.url);
+        },
+        error: (error) => {
+          console.error('Upload failed:', error);
+          reject(error);
+        }
+      });
+    });
+  }
+
   publishNow(): void {
     if (!this.validateForm()) return;
 
     this.isSaving = true;
-    const postData = {
-      user_id: this.newPost.user_id,
-      caption: this.newPost.description,
-      imageUrl: this.newPost.media_items[0]?.url,
-    };
+    const file = this.mediaFiles[0];
 
-    // Directly publish post without checking Instagram connection
-    this.apiService.post<BackendPostResponse>('post/publish', postData).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.toastService.success('Post published successfully');
-          this.resetForm();
-          this.loadDrafts();
-        } else {
-          this.handlePublishError(response.error || 'Failed to publish post');
-        }
+    if (file) {
+      this.uploadImageToPublicUrl(file).then(publicUrl => {
+        const postData = {
+          user_id: this.newPost.user_id,
+          caption: this.newPost.description,
+          imageUrl: publicUrl,
+        };
+
+        this.apiService.post<BackendPostResponse>('post/publish', postData).subscribe({
+          next: (response) => {
+            if (response.success) {
+              this.toastService.success('Post published successfully');
+              this.resetForm();
+              this.loadDrafts();
+            } else {
+              this.handlePublishError(response.error || 'Failed to publish post');
+            }
+            this.isSaving = false;
+            this.cdr.markForCheck();
+          },
+          error: (error) => this.handleApiError(error)
+        });
+      }).catch(error => {
+        this.toastService.error('Failed to upload image');
         this.isSaving = false;
         this.cdr.markForCheck();
-      },
-      error: (error) => this.handleApiError(error)
-    });
+      });
+    } else {
+      this.toastService.error('No image file found');
+      this.isSaving = false;
+      this.cdr.markForCheck();
+    }
   }
   
   private handlePublishError(message: string, redirectToConnections: boolean = false) {
