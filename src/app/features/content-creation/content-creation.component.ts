@@ -622,13 +622,11 @@ export class ContentCreationComponent implements OnInit {
   async uploadImageToPublicUrl(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
       const formData = new FormData();
-      formData.append('image', file.name);
-      console.log('Uploading file:', file.name);
-      console.log('File:', file);
-      console.log('Form data:', formData);
+      formData.append('image', file);
+
 
       // Upload to your backend's image upload endpoint
-      this.apiService.post<{ url: string }>('upload-image', formData).subscribe({
+      this.apiService.post<{ url: string }>('upload-image', formData, true).subscribe({
         next: (response) => {
           resolve(response.url);
         },
@@ -637,7 +635,7 @@ export class ContentCreationComponent implements OnInit {
           reject(error);
         }
       });
-    });
+      });
   }
 
   publishNow(): void {

@@ -7,19 +7,13 @@ export const apiInterceptor: HttpInterceptorFn = (
   next: HttpHandlerFn
 ) => {
   // Get token from localStorage
-  const token = localStorage.getItem('auth_token');
+  const token = localStorage.getItem('refresh_token');
   
   // Only modify requests going to our API
   if (request.url.includes(environment.apiUrl) || request.url.includes('/api/')) {
     // Clone the request and add headers
     const apiRequest = request.clone({
       url: request.url.startsWith('http') ? request.url : `${environment.apiUrl}${request.url}`,
-      setHeaders: token ? { 
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      } : {
-        'Content-Type': 'application/json'
-      }
     });
     
     return next(apiRequest).pipe(
@@ -29,7 +23,7 @@ export const apiInterceptor: HttpInterceptorFn = (
         
         // Handle 401 Unauthorized - redirect to login
         if (error.status === 401) {
-          localStorage.removeItem('auth_token');
+          localStorage.removeItem('refresh_token');
           window.location.href = '/auth/login';
         }
         
