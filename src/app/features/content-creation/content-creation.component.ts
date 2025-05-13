@@ -640,43 +640,48 @@ export class ContentCreationComponent implements OnInit {
 
   publishNow(): void {
     if (!this.validateForm()) return;
-
+  
     this.isSaving = true;
+  
     const file = this.mediaFiles[0];
-
+  
+    const publish = (imageUrl: string) => {
+      const postData = {
+        user_id: this.newPost.user_id,
+        caption: this.newPost.description,
+        imageUrl,
+      };
+  
+      this.apiService.post<BackendPostResponse>('post/publish', postData).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.toastService.success('Post published successfully');
+            this.resetForm();
+            this.loadDrafts();
+          } else {
+            this.handlePublishError(response.error || 'Failed to publish post');
+          }
+          this.isSaving = false;
+          this.cdr.markForCheck();
+        },
+        error: (error) => this.handleApiError(error)
+      });
+    };
+  
     if (file) {
-      this.uploadImageToPublicUrl(file).then(publicUrl => {
-        const postData = {
-          user_id: this.newPost.user_id,
-          caption: this.newPost.description,
-          imageUrl: publicUrl,
-        };
-
-        this.apiService.post<BackendPostResponse>('post/publish', postData).subscribe({
-          next: (response) => {
-            if (response.success) {
-              this.toastService.success('Post published successfully');
-              this.resetForm();
-              this.loadDrafts();
-            } else {
-              this.handlePublishError(response.error || 'Failed to publish post');
-            }
-            this.isSaving = false;
-            this.cdr.markForCheck();
-          },
-          error: (error) => this.handleApiError(error)
-        });
-      }).catch(error => {
+      this.uploadImageToPublicUrl(file).then(publish).catch(error => {
         this.toastService.error('Failed to upload image');
         this.isSaving = false;
         this.cdr.markForCheck();
       });
+    } else if (this.newPost.media_items[0]?.url) {
+      publish(this.newPost.media_items[0].url);
     } else {
-      this.toastService.error('No image file found');
+      this.toastService.error('No image found for publishing');
       this.isSaving = false;
       this.cdr.markForCheck();
     }
-  }
+  }  
   
   private handlePublishError(message: string, redirectToConnections: boolean = false) {
     this.toastService.error(message);
@@ -875,43 +880,36 @@ export class ContentCreationComponent implements OnInit {
     this.isLoading = true;
     this.error = null;
     const payload = { ...data };
-
-    // Always send the correct platform
     payload.platform = data.platform;
-
+  
     this.apiService.post<any>('prompt/get-content', payload).subscribe({
       next: (response) => {
-        // 1. Extract description/description
+        let raw = response.result || '';
+  
+        // --- 1. Extract Description ---
         let description = '';
-        // Try to find the first paragraph after "Content Insight and Strategy" or similar
-        const insightMatch = response.result.match(/(?:Content Insight and Strategy:|Description:|### Instagram Reel Description:|^\\d+\\.\\s*)[\\s\\S]*?(?:\\n|\\r|\\r\\n)([\\s\\S]*?)(?:\\n\\d+\\.|\\n#|\\n\\*\\*|\\n4\\.|$)/i);
-        if (insightMatch && insightMatch[1]) {
-          description = insightMatch[1].trim();
-        } else {
-          // fallback: use the whole result
-          description = response.result.trim();
-        }
+        const descriptionMatch = raw.match(/(?:Content Insight and Strategy:|Description:||^\d+\.\s*)[\s\S]*?(?:\n|\r|\r\n)([\s\S]*?)(?:\n\d+\.|\n#|\n\*\*|\n4\.|$)/i);
+        description = descriptionMatch?.[1]?.trim() || raw.trim();
         this.newPost.description = description;
-
-        // 2. Extract hashtags (look for lines with #)
+  
+        // --- 2. Extract Hashtags ---
         let hashtags = '';
-        const hashtagMatch = response.result.match(/#\\w[\\w\\d_# ]+/);
-        if (hashtagMatch) {
-          hashtags = hashtagMatch[0].trim();
-        } else {
-          // fallback: look for Hashtags/Keywords section
-          const hashSection = response.result.match(/Hashtags[\\s\\S]*?#([\\w# ]+)/i);
-          if (hashSection && hashSection[1]) {
-            hashtags = hashSection[1].trim();
-          }
+        const inlineHashtagMatch = raw.match(/#\w[\w\d_# ]+/);
+        const sectionHashtagMatch = raw.match(/Hashtags[\s\S]*?#([\w# ,]+)/i);
+  
+        if (inlineHashtagMatch) {
+          hashtags = inlineHashtagMatch[0].trim();
+        } else if (sectionHashtagMatch && sectionHashtagMatch[1]) {
+          hashtags = sectionHashtagMatch[1].trim();
         }
+  
         this.hashtags = hashtags;
         this.newPost.hashtags = this.hashtags
-          .split(',')
+          .split(/[,\s]+/)
           .map(tag => tag.replace(/^#/, '').trim())
           .filter(tag => tag.length > 0);
-
-        // 3. Set image if present
+  
+        // --- 3. Set image if present ---
         if (response.imageUrl) {
           this.newPost.media_items = [{
             id: Date.now().toString(),
@@ -921,12 +919,12 @@ export class ContentCreationComponent implements OnInit {
         } else {
           this.newPost.media_items = [];
         }
-
-        // 4. Set platform and type
+  
+        // --- 4. Set platform and type ---
         this.newPost.platform = data.platform.toLowerCase() as any;
         this.newPost.type = data.generateImage ? PostType.IMAGE : PostType.IMAGE;
-
-        // 5. Close wizard and update UI
+  
+        // --- 5. Finalize ---
         this.closeContentWizard();
         this.toastService.show('Content generated successfully!', 'success');
         this.isLoading = false;
@@ -940,6 +938,7 @@ export class ContentCreationComponent implements OnInit {
       }
     });
   }
+  
 
   loadPlatforms(): void {
     this.socialAccountsService.getConnectedAccounts().subscribe({
