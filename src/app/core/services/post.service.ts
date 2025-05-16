@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { ApiService } from './api.service';
 import { ToastService } from '../../shared/services/toast.service';
 import { Post, DraftPost } from '../models/post.model';
@@ -69,6 +69,7 @@ export class PostService {
    */
   deletePost(postId: string): Observable<void> {
     return this.apiService.delete(`${this.API_BASE}/${postId}`).pipe(
+      map(() => void 0),
       catchError(error => {
         this.toastService.error('Failed to delete post');
         return throwError(() => error);

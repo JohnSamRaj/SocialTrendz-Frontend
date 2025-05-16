@@ -11,32 +11,35 @@ export class InMemoryDbService {
   private users: User[] = [
     {
       id: 1,
-      fullName: 'Demo User',
+      full_name: 'Demo User',
       email: 'demo@example.com',
-      profilePicture: 'https://via.placeholder.com/150',
-      createdAt: new Date('2023-01-01'),
-      lastLogin: new Date()
+      profile_picture: 'https://via.placeholder.com/150',
+      created_at: new Date('2023-01-01').toISOString(),
+      last_login: new Date().toISOString()
     }
   ];
 
   private posts: Post[] = [
     {
       id: '1',
-      caption: 'Check out this amazing sunset! #nature #photography',
-      mediaItems: [
+      title: 'Check out this amazing sunset! #nature #photography',
+      description: 'Check out this amazing sunset! #nature #photography',
+      media_items: [
         {
           id: 'm1',
           url: 'https://images.unsplash.com/photo-1496449903678-68ddcb189a24',
           type: 'image'
         }
       ],
+      image_urls: ['https://images.unsplash.com/photo-1496449903678-68ddcb189a24'],
+      is_draft: false,
       hashtags: ['nature', 'photography', 'sunset'],
       status: PostStatus.PUBLISHED,
       type: PostType.IMAGE,
-      createdAt: new Date('2023-06-01'),
-      updatedAt: new Date('2023-06-01'),
-      publishedAt: new Date('2023-06-01'),
-      userId: 1,
+      created_at: new Date('2023-06-01'),
+      updated_at: new Date('2023-06-01'),
+      published_at: new Date('2023-06-01'),
+      user_id: 1,
       platform: 'instagram',
       engagement: {
         likes: 120,
@@ -49,39 +52,45 @@ export class InMemoryDbService {
     },
     {
       id: '2',
-      caption: 'New product launch coming soon! Stay tuned for updates. #business #launch',
-      mediaItems: [
+      title: 'New product launch coming soon! Stay tuned for updates. #business #launch',
+      description: 'New product launch coming soon! Stay tuned for updates. #business #launch',
+      media_items: [
         {
           id: 'm2',
           url: 'https://images.unsplash.com/photo-1504805572947-34fad45aed93',
           type: 'image'
         }
       ],
+      image_urls: ['https://images.unsplash.com/photo-1504805572947-34fad45aed93'],
+      is_draft: false,
       hashtags: ['business', 'launch', 'product'],
       status: PostStatus.SCHEDULED,
       type: PostType.IMAGE,
-      scheduledFor: new Date(Date.now() + 86400000), // Tomorrow
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      userId: 1,
+      scheduled_at: new Date(Date.now() + 86400000), // Tomorrow
+      created_at: new Date(),
+      updated_at: new Date(),
+      user_id: 1,
       platform: 'instagram'
     },
     {
       id: '3',
-      caption: 'Draft post about our team retreat',
-      mediaItems: [
+      title: 'Draft post about our team retreat',
+      description: 'Draft post about our team retreat',
+      media_items: [
         {
           id: 'm3',
           url: 'https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a',
           type: 'image'
         }
       ],
+      image_urls: ['https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a'],
+      is_draft: true,
       hashtags: ['team', 'retreat', 'company'],
       status: PostStatus.DRAFT,
       type: PostType.CAROUSEL,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      userId: 1,
+      created_at: new Date(),
+      updated_at: new Date(),
+      user_id: 1,
       platform: 'instagram'
     }
   ];
@@ -101,7 +110,7 @@ export class InMemoryDbService {
     }
 
     // Update last login
-    user.lastLogin = new Date();
+    user.last_login = new Date().toISOString();
     
     return of({...user});
   }
@@ -113,10 +122,10 @@ export class InMemoryDbService {
 
     const newUser: User = {
       id: this.users.length + 1,
-      fullName: credentials.fullName,
+      full_name: credentials.full_name,
       email: credentials.email,
-      createdAt: new Date(),
-      lastLogin: new Date()
+      created_at: new Date().toISOString(),
+      last_login: new Date().toISOString()
     };
 
     this.users.push(newUser);
@@ -127,7 +136,7 @@ export class InMemoryDbService {
 
   // Posts methods
   getPosts(userId: number): Observable<Post[]> {
-    return of(this.posts.filter(post => post.userId === userId));
+    return of(this.posts.filter(post => post.user_id === userId));
   }
 
   getPostById(postId: string): Observable<Post | undefined> {
@@ -138,9 +147,9 @@ export class InMemoryDbService {
     const newPost: Post = {
       ...post,
       id: Date.now().toString(),
-      status: post.scheduledFor ? PostStatus.SCHEDULED : PostStatus.DRAFT,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      status: post.scheduled_at ? PostStatus.SCHEDULED : PostStatus.DRAFT,
+      created_at: new Date(),
+      updated_at: new Date()
     };
 
     this.posts.push(newPost);
@@ -218,11 +227,11 @@ export class InMemoryDbService {
         };
       }),
       contentPerformance: this.posts
-        .filter(post => post.userId === userId && post.status === PostStatus.PUBLISHED)
+        .filter(post => post.user_id === userId && post.status === PostStatus.PUBLISHED)
         .map(post => ({
           postId: post.id,
           postType: post.type,
-          publishedAt: post.publishedAt || new Date(),
+          publishedAt: post.published_at || new Date(),
           likes: post.engagement?.likes || Math.floor(Math.random() * 100),
           comments: post.engagement?.comments || Math.floor(Math.random() * 20),
           shares: post.engagement?.shares || Math.floor(Math.random() * 10),

@@ -177,7 +177,12 @@
         
       <div class="form-section">
         <h3>Media</h3>
-        <div class="media-upload-area" [class.has-error]="mediaUploadError" *ngIf="newPost.media_items.length === 0">
+        <div class="media-upload-area" 
+             [class.has-error]="mediaUploadError" 
+             *ngIf="newPost.media_items.length === 0"
+             (dragover)="onDragOver($event)"
+             (dragleave)="onDragLeave($event)"
+             (drop)="onDrop($event)">
           <input 
             type="file" 
             id="media-upload" 
@@ -186,7 +191,7 @@
             multiple
             class="hidden-input"
           >
-          <label for="media-upload" class="upload-label">
+          <label for="media-upload" class="upload-label" [class.drag-over]="isDragging">
             <div class="upload-icon">
               <i class="fas fa-cloud-upload-alt"></i>
             </div>

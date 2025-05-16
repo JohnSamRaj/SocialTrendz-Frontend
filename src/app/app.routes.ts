@@ -70,10 +70,10 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   // Instagram Auth Callback
-  {
-    path: 'auth/instagram-callback',
-    loadComponent: () => import('./features/auth/callback/callback.component').then(m => m.CallbackComponent)
-  },
+  // {
+  //   path: 'auth/instagram-callback',
+  //   loadComponent: () => import('./features/auth/callback/callback.component').then(m => m.CallbackComponent)
+  // },
   {
     path: 'help',
     loadComponent: () => import('./features/help/help.component').then(m => m.HelpComponent),

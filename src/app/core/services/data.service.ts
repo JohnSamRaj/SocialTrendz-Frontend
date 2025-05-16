@@ -48,7 +48,7 @@ export class DataService {
     return this.apiService.get<ConnectedAccount[]>(`${this.API_BASE}/social-accounts/connected/${userId}`).pipe(
       map(accounts => accounts.map(mapBackendToFrontendAccount)),
       catchError(error => {
-        this.toastService.error('Failed to fetch connected accounts');
+        // this.toastService.error('Failed to fetch connected accounts');
         return throwError(() => error);
       })
     );
@@ -63,7 +63,7 @@ export class DataService {
   getPosts(userId: number): Observable<Post[]> {
     return this.apiService.get<Post[]>(`${this.API_BASE}/posts/user/${userId}`).pipe(
       catchError(error => {
-        this.toastService.error('Failed to fetch posts');
+        // this.toastService.error('Failed to fetch posts');
         return throwError(() => error);
       })
     );

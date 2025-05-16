@@ -51,7 +51,14 @@ export class CallbackComponent implements OnInit {
             if (response.needsOtpVerification) {
               this.router.navigate(['/auth/verify'], { replaceUrl: true });
             } else {
-              // Navigation is handled in the service
+              // Check onboarding status
+              if (!response.user.has_completed_onboarding) {
+                this.router.navigate(['/onboarding'], { replaceUrl: true });
+              } else if (!response.user.connected_platforms || response.user.connected_platforms.length === 0) {
+                this.router.navigate(['/accounts-connect'], { replaceUrl: true });
+              } else {
+                this.router.navigate(['/dashboard'], { replaceUrl: true });
+              }
               console.log('Login successful, redirecting...');
             }
           } else {

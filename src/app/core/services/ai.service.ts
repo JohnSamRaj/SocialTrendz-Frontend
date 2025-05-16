@@ -17,11 +17,34 @@ interface AIGenerationResponse {
   alternativeOptions?: string[];
 }
 
+export interface PromptPreviewResponse {
+  textPrompt: string;
+  imagePrompt: string;
+}
+
+export interface ContentWizardData {
+  group: string;
+  subGroup: string;
+  platform: string;
+  contentType: string;
+  niche: string;
+  audience: string;
+  tone: string;
+  goal: string;
+  mainTopic: string;
+  generateImage: boolean;
+  generateText: boolean;
+  businessInfo: {
+    businessType: string;
+  };
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class AIService {
-  private readonly API_BASE = '/api/ai';
+  private readonly API_BASE = 'ai';
+  private readonly PROMPT_BASE = 'prompt';
 
   constructor(
     private apiService: ApiService,
@@ -91,6 +114,18 @@ export class AIService {
     }>(`${this.API_BASE}/generate-content`, data).pipe(
       catchError(error => {
         this.toastService.error('Failed to generate content');
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Preview prompts based on content wizard inputs without generating content
+   */
+  previewPrompt(wizardData: ContentWizardData): Observable<PromptPreviewResponse> {
+    return this.apiService.post<PromptPreviewResponse>(`${this.PROMPT_BASE}/preview-prompt`, wizardData).pipe(
+      catchError(error => {
+        this.toastService.error('Failed to preview prompts');
         return throwError(() => error);
       })
     );

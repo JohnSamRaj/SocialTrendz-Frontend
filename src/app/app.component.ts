@@ -64,11 +64,31 @@ export class AppComponent implements OnInit, OnDestroy {
     // Check the current route to determine if we're on an auth page
     this.checkIfAuthPage(this.router.url);
     
+    // Show onboarding modal immediately if user is logged in and not on auth page
+    if (this.authService.isLoggedIn() && !this.isAuthPage) {
+      const currentUser = this.authService.getCurrentUser();
+      const has_completed_onboarding = currentUser?.has_completed_onboarding || false;
+      
+      if (!has_completed_onboarding) {
+        this.showOnboardingModal = true;
+      }
+    }
+    
     // Subscribe to future route changes to update isAuthPage
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
       this.checkIfAuthPage(event.url);
+      
+      // Show onboarding modal after login if not completed
+      if (this.authService.isLoggedIn() && !this.isAuthPage) {
+        const currentUser = this.authService.getCurrentUser();
+        const has_completed_onboarding = currentUser?.has_completed_onboarding || false;
+        
+        if (!has_completed_onboarding) {
+          this.showOnboardingModal = true;
+        }
+      }
     });
     
     // Listen for content creation page load to auto-collapse sidebar

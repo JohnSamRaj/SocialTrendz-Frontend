@@ -1,24 +1,9 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-// Content Wizard data model
-export interface ContentWizardData {
-  group: string;
-  subGroup: string;
-  platform: string;
-  contentType: string;
-  niche: string;
-  audience: string;
-  tone: string;
-  goal: string;
-  mainTopic: string;
-  generateImage: boolean;
-  generateText: boolean;
-  businessInfo: {
-    businessType: string;
-  };
-}
+import { ApiService } from '../../../core/services/api.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { AIService, ContentWizardData, PromptPreviewResponse } from '../../../core/services/ai.service';
 
 @Component({
   selector: 'app-content-wizard',
@@ -53,6 +38,12 @@ export class ContentWizardComponent implements OnInit {
       businessType: ''
     }
   };
+
+  // Preview prompts
+  textPromptPreview: string = '';
+  imagePromptPreview: string = '';
+  showPromptPreview: boolean = false;
+  isPreviewLoading: boolean = false;
 
   // Form options
   groups = ['Fashion','Other'];
@@ -104,7 +95,12 @@ export class ContentWizardComponent implements OnInit {
     'Showcase products/services'
   ];
 
-  constructor() { }
+  constructor(
+    private apiService: ApiService,
+    private aiService: AIService,
+    private toastService: ToastService,
+    private cdRef: ChangeDetectorRef
+  ) { }
 
   ngOnInit(): void {
   }
@@ -113,12 +109,18 @@ export class ContentWizardComponent implements OnInit {
   nextStep(): void {
     if (this.currentStep < this.totalSteps) {
       this.currentStep++;
+      
+      // Reset prompt preview when changing steps
+      this.showPromptPreview = false;
     }
   }
 
   prevStep(): void {
     if (this.currentStep > 1) {
       this.currentStep--;
+      
+      // Reset prompt preview when changing steps
+      this.showPromptPreview = false;
     }
   }
 
@@ -145,6 +147,36 @@ export class ContentWizardComponent implements OnInit {
     return !!this.wizardData.mainTopic;
   }
 
+  // Preview the prompts
+  previewPrompt(): void {
+    if (!this.canSubmit()) {
+      this.toastService.warning('Please fill out the main topic first.');
+      return;
+    }
+
+    this.isPreviewLoading = true;
+    this.showPromptPreview = true;
+
+    this.aiService.previewPrompt(this.wizardData)
+      .subscribe({
+        next: (response) => {
+          console.log('Prompt preview response:', response);
+
+          this.textPromptPreview = response?.textPrompt || '';
+          this.imagePromptPreview = response?.imagePrompt || '';
+          this.isPreviewLoading = false;
+          this.cdRef.detectChanges();
+        },
+        error: (error) => {
+          this.toastService.error('Failed to preview prompts');
+          this.isPreviewLoading = false;
+          this.showPromptPreview = false;
+          this.cdRef.detectChanges();
+          console.error('Error previewing prompts:', error);
+        }
+      });
+  }
+
   // Submit the wizard data
   submitWizard(): void {
     this.submit.emit(this.wizardData);
@@ -160,4 +192,11 @@ export class ContentWizardComponent implements OnInit {
   getSubGroups(): { label: string, value: string }[] {
     return this.subGroups[this.wizardData.group] || [];
   }
-} 
+  
+  // Update prompt previews when inputs change
+  updatePromptPreviews(): void {
+    if (this.showPromptPreview && this.canSubmit() && !this.isPreviewLoading) {
+      this.previewPrompt();
+    }
+  }
+}

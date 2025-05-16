@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { InstagramService } from '../../core/services/instagram.service';
-import { AIService } from '../../core/services/ai.service';
+import { AIService, ContentWizardData } from '../../core/services/ai.service';
 import { ToastService } from '../../shared/services/toast.service';
 import { Post, PostStatus, PostType, MediaItem, DraftPost } from '../../core/models/post.model';
 import { PostCardComponent } from '../../shared/components/post-card/post-card.component';
@@ -12,14 +12,12 @@ import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader
 import { SocialAccountsApiService } from '../../core/services/social-accounts-api.service';
 import { PlatformInfo, ConnectedAccount } from '../../core/models/connected-account.model';
 import { LazyLoadImageDirective } from '../../shared/directives/lazy-load-image.directive';
-import { ContentWizardComponent, ContentWizardData } from './content-wizard/content-wizard.component';
+import { ContentWizardComponent } from './content-wizard/content-wizard.component';
 import { ApiService } from '../../core/services/api.service';
 import { DataService } from '../../core/services/data.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { LazyLoadImageModule } from 'ng-lazyload-image';
 import { User } from '../../core/models/user.model';
-
-
 interface BackendPost {
   id: string;
   user_id: number;
@@ -112,18 +110,67 @@ export class ContentCreationComponent implements OnInit {
   // Form state
   mediaFiles: File[] = [];
   mediaUploadError: string | null = null;
+  isDragging = false;
 
-  private preparePostData(isDraft: boolean, scheduledAt?: Date) {
-    return {
-      user_id: this.newPost.user_id,
-      title: this.newPost.description.substring(0, 100),
-      content: this.newPost.description,
-      image_urls: this.newPost.media_items.map(item => item.url),
-      hashtags: this.newPost.hashtags,
-      platform: this.newPost.platform,
-      is_draft: isDraft,
-      scheduled_at: scheduledAt ? scheduledAt.toISOString() : undefined,
-    };
+  // Drag and drop handlers
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = true;
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+
+    const files = event.dataTransfer?.files;
+    if (files) {
+      this.handleFiles(Array.from(files));
+    }
+  }
+
+  private handleFiles(files: File[]): void {
+    const validFiles = files.filter(file => {
+      const isValidType = file.type.startsWith('image/') || file.type.startsWith('video/');
+      if (!isValidType) {
+        this.mediaUploadError = 'Invalid file type. Please upload images or videos only.';
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length > 0) {
+      this.mediaUploadError = null;
+      this.mediaFiles = [...this.mediaFiles, ...validFiles];
+      
+      // Process each file
+      validFiles.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+          this.newPost.media_items.push({
+            id: `temp-${Date.now()}-${this.newPost.media_items.length}`,
+            url: e.target.result,
+            type: file.type.startsWith('image/') ? 'image' : 'video'
+          });
+          this.cdr.markForCheck();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  }
+
+  handleFileInput(event: any): void {
+    const files = event.target.files;
+    if (files) {
+      this.handleFiles(Array.from(files));
+    }
   }
   
   // Errors and loading states
@@ -430,36 +477,6 @@ export class ContentCreationComponent implements OnInit {
     if (tab === 'drafts') {
       this.loadDrafts();
     }
-  }
-  
-  handleFileInput(event: any): void {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-    
-    this.mediaUploadError = null;
-    
-    // Validate file types (only images and videos)
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-        this.mediaUploadError = 'Only image and video files are allowed';
-        return;
-      }
-      
-      // Add to media files
-      this.mediaFiles.push(file);
-      
-      // Create a preview and add to post media items
-      const mediaItem: MediaItem = {
-        id: `temp-${Date.now()}-${i}`,
-        url: URL.createObjectURL(file),
-        type: file.type.startsWith('image/') ? 'image' : 'video'
-      };
-      this.newPost.media_items.push(mediaItem);
-    }
-    
-    // Force UI update for instant preview
-    this.cdr.detectChanges();
   }
   
   removeMedia(index: number): void {

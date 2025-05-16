@@ -117,7 +117,6 @@ export class ApiService {
    */
   post<T>(endpoint: string, data: any, isFormData: boolean = false): Observable<T> {
     const headers = this.createHeaders(isFormData);
-    console.log(headers);
     return this.http.post<T>(`${this.apiUrl}/${endpoint}`, data, { headers })
       .pipe(
         catchError(error => this.handleError(error))

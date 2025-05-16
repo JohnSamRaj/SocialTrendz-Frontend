@@ -114,7 +114,7 @@ export class AnalyticsComponent implements OnInit, OnDestroy {
         }
       },
       error: (err) => {
-        this.error = 'Failed to check connected accounts';
+        // this.error = 'Failed to check connected accounts';
         this.isLoading = false;
         console.error('Error checking connected accounts:', err);
       }

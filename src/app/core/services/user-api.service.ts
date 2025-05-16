@@ -59,6 +59,6 @@ export class UserApiService {
    * @returns Observable with updated user data
    */
   completeOnboarding(): Observable<User> {
-    return this.updateUserProfile({ hasCompletedOnboarding: true });
+    return this.updateUserProfile({ has_completed_onboarding: true });
   }
 }

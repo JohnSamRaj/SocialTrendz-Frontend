@@ -40,8 +40,6 @@ export class DashboardComponent implements OnInit {
   error: string | null = null;
   isOnboardingModalVisible = false;
   
-  @ViewChild(OnboardingModalComponent) onboardingModal!: OnboardingModalComponent;
-
   // For enum access in template
   PostStatus = PostStatus;
 
@@ -95,7 +93,7 @@ export class DashboardComponent implements OnInit {
         this.loadAnalytics();
       },
       error: (err) => {
-        this.error = 'Failed to load posts. Please try again.';
+        // this.error = 'Failed to load posts. Please try again.';
         this.isLoading = false;
         console.error('Error loading posts:', err);
       }
@@ -216,44 +214,6 @@ export class DashboardComponent implements OnInit {
   }
 
   /**
-   * Shows the onboarding modal
-   */
-  showOnboardingModal(): void {
-    this.isOnboardingModalVisible = true;
-  }
-  
-  /**
-   * Handler for onboarding completed event
-   */
-  onOnboardingCompleted(): void {
-    this.isOnboardingModalVisible = false;
-    // Update user's onboarding status in the service
-    const currentUser = this.authService.getCurrentUser();
-    if (currentUser) {
-      currentUser.has_completed_onboarding = true;
-      this.authService.updateCurrentUser(currentUser);
-      this.toastService.success('Onboarding completed successfully!');
-    }
-    this.loadDashboardData();
-  }
-  
-  /**
-   * Handler for onboarding skipped event
-   */
-  onOnboardingSkipped(): void {
-    this.isOnboardingModalVisible = false;
-    this.toastService.info('Onboarding skipped. You can access it anytime from the dashboard.');
-    this.loadDashboardData();
-  }
-  
-  /**
-   * Opens the onboarding modal (legacy method)
-   */
-  openOnboardingModal(): void {
-    this.isOnboardingModalVisible = true;
-  }
-
-  /**
    * Check if the user has connected accounts 
    * This is now just informational and doesn't block dashboard content
    */
@@ -276,27 +236,42 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  showOnboardingModal(): void {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser?.has_completed_onboarding) {
+      this.isOnboardingModalVisible = true;
+      // Clear any session storage flags to ensure modal shows
+      sessionStorage.removeItem('has_seen_onboarding');
+    } else {
+      this.toastService.info('You have already completed the onboarding process.');
+    }
+  }
+
+  onOnboardingCompleted(): void {
+    this.isOnboardingModalVisible = false;
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser) {
+      currentUser.has_completed_onboarding = true;
+      this.authService.updateCurrentUser(currentUser);
+    }
+    this.loadDashboardData();
+  }
+
+  onOnboardingSkipped(): void {
+    this.isOnboardingModalVisible = false;
+  }
+
   ngOnInit(): void {
     // Start with loading state
     this.isLoading = true;
     
-    // Simulate initial loading delay
-    setTimeout(() => {
-      this.loadDashboardData();
-      this.checkConnectedAccounts();
-    }, 1000);
+    // Load dashboard data
+    this.loadDashboardData();
     
-    // Always show onboarding modal for new users
-    const currentUser = this.authService.getCurrentUser();
-    if (currentUser && !currentUser.has_completed_onboarding) {
-      // Show the onboarding modal after a short delay to ensure the page is fully loaded
-      setTimeout(() => {
-        this.isOnboardingModalVisible = true;
-      }, 1500); // Slightly longer delay to ensure loading completes first
-    }
-
-    // Check for session storage flags after a short delay 
-    // to ensure components are fully loaded
+    // Check connected accounts
+    this.checkConnectedAccounts();
+    
+    // Show welcome message after a short delay
     setTimeout(() => {
       // Check if we need to show a social login success message
       const socialLoginSuccess = sessionStorage.getItem('socialLoginSuccess');
@@ -308,22 +283,6 @@ export class DashboardComponent implements OnInit {
         sessionStorage.removeItem('socialLoginSuccess');
       }
       
-      // Check if we need to show a platform connection success message
-      const platformConnectSuccess = sessionStorage.getItem('platformConnectSuccess');
-      if (platformConnectSuccess) {
-        // Show toast message using the service
-        this.toastService.success(platformConnectSuccess);
-        
-        // Clear the flag so it doesn't trigger again
-        sessionStorage.removeItem('platformConnectSuccess');
-        
-        // If Instagram was connected, refresh the connected accounts
-        if (sessionStorage.getItem('hasConnectedInstagram') === 'true') {
-          this.checkConnectedAccounts();
-          sessionStorage.removeItem('hasConnectedInstagram');
-        }
-      }
-      
       // Check if we need to show a platform connection error message
       const platformConnectError = sessionStorage.getItem('platformConnectError');
       if (platformConnectError) {
@@ -332,23 +291,6 @@ export class DashboardComponent implements OnInit {
         
         // Clear the flag so it doesn't trigger again
         sessionStorage.removeItem('platformConnectError');
-      }
-      
-      // Check if we need to open the onboarding modal
-      // This flag is set by the OAuth login process for new users
-      const openOnboardingModal = sessionStorage.getItem('openOnboardingModal');
-      if (openOnboardingModal === 'true') {
-        // Clear the flag so it doesn't trigger again
-        sessionStorage.removeItem('openOnboardingModal');
-        
-        // Open the onboarding modal for new users
-        this.isOnboardingModalVisible = true;
-        this.tourService.completeOnboarding();
-      } 
-      // Show onboarding modal for first-time users if not already shown
-      else if (!this.tourService.hasCompletedTour()) {
-        this.isOnboardingModalVisible = true;
-        this.tourService.completeOnboarding();
       }
     }, 1500);
   }

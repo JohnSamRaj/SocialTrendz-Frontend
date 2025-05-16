@@ -40,11 +40,26 @@ import {
 })
 export class OnboardingModalComponent implements OnInit {
   @Input() set visible(value: boolean) {
-    this.isVisible = value;
     if (value) {
+      const currentUser = this.authService.getCurrentUser();
+      const has_completed_onboarding = currentUser?.has_completed_onboarding || false;
+      const has_seen_onboarding = sessionStorage.getItem('has_seen_onboarding') === 'true';
+      
+      // Hide if user has completed onboarding or has seen it this session
+      if (has_completed_onboarding || has_seen_onboarding) {
+        this.isVisible = false;
+        this.visibleChange.emit(false);
+        return;
+      }
+      
+      this.isVisible = true;
       this.showIntro = true;
       this.showOutro = false;
       this.currentQuestionIndex = 0;
+      // Mark that user has seen onboarding this session
+      sessionStorage.setItem('has_seen_onboarding', 'true');
+    } else {
+      this.isVisible = false;
     }
   }
 
@@ -370,27 +385,21 @@ export class OnboardingModalComponent implements OnInit {
     
     // Prepare answers for submission
     const answers: QuestionAnswer[] = this.prepareAnswersForSubmission();
-    // console.log("answers *************",answers);
 
     // Get user ID from auth service
     const currentUser = this.authService.getCurrentUser();
     const userId = currentUser?.id || 0;
-    console.log("answers *************",answers,userId);
-
-    // if (userId === 0) {
-    //   console.error('No user ID available');
-    //   this.isLoading = false;
-    //   return;
-    // }
 
     this.onboardingService.submitAnswers(answers)
       .pipe(finalize(() => this.isLoading = false))
       .subscribe({
         next: () => {
+          // Update onboarding status to completed
           this.authService.updateOnboardingStatus(true).subscribe({
             next: () => {
               this.hide();
               this.completed.emit(true);
+              // Keep the session storage flag since we want to prevent showing onboarding again this session
               this.router.navigate(['/accounts-connect']);
             },
             error: (err: Error) => {

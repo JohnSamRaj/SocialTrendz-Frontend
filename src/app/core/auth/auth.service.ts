@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, of, throwError, EMPTY } from 'rxjs';
 import { catchError, map, delay } from 'rxjs/operators';
 import { User, AuthCredentials, RegisterCredentials, AuthProvider, OAuthResponse } from '../models/user.model';
-import { DataService } from '../services/data.service';
 import { ToastService } from '../../shared/services/toast.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ApiService } from '../services/api.service';
@@ -24,7 +23,6 @@ export class AuthService {
 
   constructor(
     private router: Router,
-    private dataService: DataService,
     private toastService: ToastService,
     private apiService: ApiService
   ) {
@@ -81,7 +79,7 @@ export class AuthService {
       }),
       catchError((error: HttpErrorResponse) => {
         return throwError(() => new Error(
-          error.error?.error || 'Registration failed. Please try again.'
+          error.error?.error || 'User Email Already Exist'
         )).pipe(delay(800));
       })
     );
@@ -111,13 +109,31 @@ export class AuthService {
     );
   }
 
-  loginWithGoogle(): Observable<OAuthResponse> {
-    return this.apiService.get<any>('auth/google').pipe(
+  loginWithGoogle(): Observable<{ user: User; needsOtpVerification: boolean }> {
+    // Simulate API call with a delay
+    return of({
+      user: {
+        id: 1,
+        email: 'dummy@example.com',
+        full_name: 'Dummy User',
+        profile_picture: 'assets/images/default-profile.svg',
+        created_at: new Date().toISOString(),
+        last_login: new Date().toISOString(),
+        is_verified: true,
+        has_completed_onboarding: false,
+        auth_provider: AuthProvider.GOOGLE,
+        connected_platforms: [],
+        token: 'dummy-token',
+        refresh_token: 'dummy-refresh-token'
+      },
+      needsOtpVerification: false
+    }).pipe(
+      delay(1000), // Simulate network delay
       map(response => {
-        window.location.href = response.url;
-        return response as OAuthResponse;
-      }),
-      catchError(() => throwError(() => new Error('Google login failed')))
+        this.storeUserData(response.user);
+        this.currentUserSubject.next(response.user);
+        return response;
+      })
     );
   }
 
@@ -132,26 +148,30 @@ export class AuthService {
   }
 
   handleOAuthCallback(): Observable<{ user: User; needsOtpVerification: boolean }> {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    const error = params.get('error');
-
-    if (error) {
-      return throwError(() => new Error('OAuth authentication failed'));
-    }
-
-    if (!code) {
-      return throwError(() => new Error('No authorization code received'));
-    }
-
-    return this.apiService.post<any>('auth/oauth-callback', { code }).pipe(
+    // Simulate successful callback
+    return of({
+      user: {
+        id: 1,
+        email: 'dummy@example.com',
+        full_name: 'Dummy User',
+        profile_picture: 'assets/images/default-profile.svg',
+        created_at: new Date().toISOString(),
+        last_login: new Date().toISOString(),
+        is_verified: true,
+        has_completed_onboarding: false,
+        auth_provider: AuthProvider.GOOGLE,
+        connected_platforms: [],
+        token: 'dummy-token',
+        refresh_token: 'dummy-refresh-token'
+      },
+      needsOtpVerification: false
+    }).pipe(
+      delay(1000),
       map(response => {
-        const user = response.user as User;
-        this.storeUserData(user);
-        this.currentUserSubject.next(user);
-        return { user, needsOtpVerification: false };
-      }),
-      catchError(() => throwError(() => new Error('OAuth callback failed')))
+        this.storeUserData(response.user);
+        this.currentUserSubject.next(response.user);
+        return response;
+      })
     );
   }
 
