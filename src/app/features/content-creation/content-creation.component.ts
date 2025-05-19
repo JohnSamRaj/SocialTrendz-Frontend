@@ -960,49 +960,39 @@ export class ContentCreationComponent implements OnInit {
   
     this.apiService.post<any>('prompt/get-content', payload).subscribe({
       next: (response) => {
-        let raw = response.result || '';
-  
-        // --- 1. Extract Description ---
-        let description = '';
-        const descriptionMatch = raw.match(/(?:Content Insight and Strategy:|Description:||^\d+\.\s*)[\s\S]*?(?:\n|\r|\r\n)([\s\S]*?)(?:\n\d+\.|\n#|\n\*\*|\n4\.|$)/i);
-        description = descriptionMatch?.[1]?.trim() || raw.trim();
-        this.newPost.description = description;
-  
-        // --- 2. Extract Hashtags ---
-        let hashtags = '';
-        const inlineHashtagMatch = raw.match(/#\w[\w\d_# ]+/);
-        const sectionHashtagMatch = raw.match(/Hashtags[\s\S]*?#([\w# ,]+)/i);
-  
-        if (inlineHashtagMatch) {
-          hashtags = inlineHashtagMatch[0].trim();
-        } else if (sectionHashtagMatch && sectionHashtagMatch[1]) {
-          hashtags = sectionHashtagMatch[1].trim();
+        try {
+          // Parse the JSON string from the result
+          const result = JSON.parse(response.result.replace(/```json\n|\n```/g, ''));
+          
+          // Set description directly from JSON
+          this.newPost.description = result.description || '';
+          
+          // Set hashtags directly from JSON array
+          this.hashtags = result.hashtags ? result.hashtags.join(' ') : '';
+          this.newPost.hashtags = result.hashtags || [];
+          
+          // Set image if present in response
+          if (response.imageUrl) {
+            this.newPost.media_items = [{
+              id: Date.now().toString(),
+              url: response.imageUrl,
+              type: 'image'
+            }];
+          } else {
+            this.newPost.media_items = [];
+          }
+          
+          // Set platform and type
+          this.newPost.platform = data.platform.toLowerCase() as any;
+          this.newPost.type = data.generateImage ? PostType.IMAGE : PostType.IMAGE;
+          
+          // Finalize
+          this.closeContentWizard();
+          this.toastService.show('Content generated successfully!', 'success');
+        } catch (error) {
+          this.error = 'Failed to parse content response';
+          this.toastService.error(this.error);
         }
-  
-        this.hashtags = hashtags;
-        this.newPost.hashtags = this.hashtags
-          .split(/[,\s]+/)
-          .map(tag => tag.replace(/^#/, '').trim())
-          .filter(tag => tag.length > 0);
-  
-        // --- 3. Set image if present ---
-        if (response.imageUrl) {
-          this.newPost.media_items = [{
-            id: Date.now().toString(),
-            url: response.imageUrl,
-            type: 'image'
-          }];
-        } else {
-          this.newPost.media_items = [];
-        }
-  
-        // --- 4. Set platform and type ---
-        this.newPost.platform = data.platform.toLowerCase() as any;
-        this.newPost.type = data.generateImage ? PostType.IMAGE : PostType.IMAGE;
-  
-        // --- 5. Finalize ---
-        this.closeContentWizard();
-        this.toastService.show('Content generated successfully!', 'success');
         this.isLoading = false;
         this.cdr.markForCheck();
       },

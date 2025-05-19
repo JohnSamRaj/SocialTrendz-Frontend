@@ -1,4 +1,4 @@
-<aside class="sidebar" [class.collapsed]="isCollapsed">
+<aside class="sidebar" [class.collapsed]="isCollapsed" (mouseenter)="onSidebarMouseEnter()" (mouseleave)="onSidebarMouseLeave()">
   <div class="sidebar-header">
     <div class="platform-selector" (click)="togglePlatformDropdown()">
       <i class="fab fa-instagram" *ngIf="selectedPlatform === 'instagram'"></i>
@@ -10,9 +10,9 @@
     </div>
     
     <!-- Desktop and tablet collapse button, always visible -->
-    <button class="toggle-btn" (click)="toggleSidebar()">
+    <!-- <button class="toggle-btn" (click)="toggleSidebar()">
       <i class="fas" [class.fa-chevron-left]="!isCollapsed" [class.fa-chevron-right]="isCollapsed"></i>
-    </button>
+    </button> -->
     
     <!-- Mobile close button - with improved click handler -->
     <button class="mobile-close mobile-only" (click)="closeSidebar()" aria-label="Close sidebar">
