@@ -26,14 +26,6 @@
     </main>
   </div>
   
-  <!-- Onboarding Modal -->
-  <app-onboarding-modal 
-    *ngIf="authService.isLoggedIn() && !isAuthPage"
-    [(visible)]="showOnboardingModal"
-    (completed)="onOnboardingCompleted()"
-    (skipped)="onOnboardingSkipped()">
-  </app-onboarding-modal>
-  
   <!-- Toast Messages -->
   <app-toast-message></app-toast-message>
   

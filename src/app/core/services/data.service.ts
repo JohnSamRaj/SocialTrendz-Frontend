@@ -6,20 +6,22 @@
  * For this boilerplate, it uses in-memory data.
  */
 import { Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
+import { Observable, throwError, BehaviorSubject } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { User } from '../models/user.model';
-import { Post, PostStatus, PostType, DraftPost } from '../models/post.model';
+import { Post, PostStatus, PostType, SavedPost } from '../models/post.model';
 import { ConnectedAccount, mapBackendToFrontendAccount } from '../models/connected-account.model';
 import { AnalyticsOverview } from '../models/analytics.model';
 import { ApiService } from './api.service';
 import { ToastService } from '../../shared/services/toast.service';
+import { ContentWizardData } from './ai.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DataService {
   private readonly API_BASE = '/api';
+  private contentWizardData = new BehaviorSubject<ContentWizardData | null>(null);
 
   constructor(
     private apiService: ApiService,
@@ -78,7 +80,7 @@ export class DataService {
     );
   }
 
-  createPost(post: DraftPost): Observable<Post> {
+  createPost(post: SavedPost): Observable<Post> {
     return this.apiService.post<Post>(`${this.API_BASE}/posts`, post).pipe(
       catchError(error => {
         this.toastService.error('Failed to create post');
@@ -133,5 +135,13 @@ export class DataService {
         return throwError(() => error);
       })
     );
+  }
+
+  setContentWizardData(data: ContentWizardData) {
+    this.contentWizardData.next(data);
+  }
+
+  getContentWizardData() {
+    return this.contentWizardData.asObservable();
   }
 }

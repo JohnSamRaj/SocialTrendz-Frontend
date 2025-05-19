@@ -9,13 +9,13 @@ import { BehaviorSubject } from 'rxjs';
   providedIn: 'root'
 })
 export class TourService {
-  private hasCompletedOnboardingSubject = new BehaviorSubject<boolean>(false);
-  public hasCompletedOnboarding$ = this.hasCompletedOnboardingSubject.asObservable();
+  private has_completed_onboardingSubject = new BehaviorSubject<boolean>(false);
+  public has_completed_onboarding$ = this.has_completed_onboardingSubject.asObservable();
 
   constructor() {
     // Load completed status from localStorage
-    const hasCompleted = localStorage.getItem('hasCompletedOnboarding') === 'true';
-    this.hasCompletedOnboardingSubject.next(hasCompleted);
+    const has_completed = localStorage.getItem('has_completed_onboarding') === 'true';
+    this.has_completed_onboardingSubject.next(has_completed);
   }
   
   /**
@@ -23,15 +23,15 @@ export class TourService {
    * @returns boolean indicating if user has completed onboarding
    */
   hasCompletedTour(): boolean {
-    return this.hasCompletedOnboardingSubject.value || localStorage.getItem('tour_completed') === 'true';
+    return this.has_completed_onboardingSubject.value || localStorage.getItem('tour_completed') === 'true';
   }
 
   /**
    * Marks the onboarding as completed
    */
   completeOnboarding(): void {
-    localStorage.setItem('hasCompletedOnboarding', 'true');
-    this.hasCompletedOnboardingSubject.next(true);
+    localStorage.setItem('has_completed_onboarding', 'true');
+    this.has_completed_onboardingSubject.next(true);
   }
   
   /**

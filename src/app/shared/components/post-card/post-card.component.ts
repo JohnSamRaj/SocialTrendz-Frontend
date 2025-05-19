@@ -112,8 +112,8 @@ export class PostCardComponent {
         return 'status-published';
       case PostStatus.SCHEDULED:
         return 'status-scheduled';
-      case PostStatus.DRAFT:
-        return 'status-draft';
+      case PostStatus.SAVED:
+        return 'status-saved';
       case PostStatus.FAILED:
         return 'status-failed';
       default:
@@ -129,8 +129,8 @@ export class PostCardComponent {
         return 'Published';
       case PostStatus.SCHEDULED:
         return 'Scheduled';
-      case PostStatus.DRAFT:
-        return 'Draft';
+      case PostStatus.SAVED:
+        return 'Saved';
       case PostStatus.FAILED:
         return 'Failed';
       default:

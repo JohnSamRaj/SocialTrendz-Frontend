@@ -734,7 +734,7 @@
   gap: var(--spacing-md);
 }
 
-.save-draft-btn, .publish-btn {
+.save-saved-btn, .publish-btn {
   flex: 1;
   display: flex;
   align-items: center;
@@ -761,33 +761,33 @@
   gap: var(--spacing-sm);
 }
 
-/* Drafts Tab */
-.drafts-header {
+/* Saved Tab */
+.saved-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-lg);
 }
 
-.drafts-header h2 {
+.saved-header h2 {
   margin: 0;
   color: var(--color-darkest);
   font-size: 1.3rem;
 }
 
-.new-draft-btn {
+.new-saved-btn {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
 }
 
-.drafts-grid {
+.saved-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: var(--spacing-md);
 }
 
-.empty-drafts {
+.empty-saved {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -812,14 +812,14 @@
   margin-bottom: var(--spacing-md);
 }
 
-.empty-drafts h3 {
+.empty-saved h3 {
   margin-top: 0;
   margin-bottom: var(--spacing-sm);
   color: var(--color-dark);
   font-size: 1.2rem;
 }
 
-.empty-drafts p {
+.empty-saved p {
   color: var(--color-tertiary);
   margin-bottom: var(--spacing-lg);
 }

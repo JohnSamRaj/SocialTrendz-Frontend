@@ -1,15 +1,13 @@
-import { Component, OnInit, OnDestroy, HostListener, ErrorHandler } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, Router, NavigationEnd, NavigationError, NavigationCancel } from '@angular/router';
+import { Router, RouterOutlet, NavigationEnd, NavigationError, NavigationCancel } from '@angular/router';
+import { filter, Subject, takeUntil } from 'rxjs';
 import { HeaderComponent } from './shared/components/header/header.component';
 import { SidebarComponent } from './shared/components/sidebar/sidebar.component';
 import { ToastMessageComponent } from './shared/components/toast-message/toast-message.component';
-import { OnboardingModalComponent } from './shared/components/onboarding-modal/onboarding-modal.component';
 import { AuthService } from './core/auth/auth.service';
 import { ToastService } from './shared/services/toast.service';
-import { filter, takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
-
+import { ErrorHandler } from '@angular/core';
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -18,8 +16,7 @@ import { Subject } from 'rxjs';
     RouterOutlet,
     HeaderComponent,
     SidebarComponent,
-    ToastMessageComponent,
-    OnboardingModalComponent
+    ToastMessageComponent
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
@@ -31,7 +28,6 @@ export class AppComponent implements OnInit, OnDestroy {
   isLoading = false; // Track loading state
   
   isAuthPage = false;
-  showOnboardingModal = false;
   
   // For cleanup of subscriptions
   private destroy$ = new Subject<void>();
@@ -64,31 +60,11 @@ export class AppComponent implements OnInit, OnDestroy {
     // Check the current route to determine if we're on an auth page
     this.checkIfAuthPage(this.router.url);
     
-    // Show onboarding modal immediately if user is logged in and not on auth page
-    if (this.authService.isLoggedIn() && !this.isAuthPage) {
-      const currentUser = this.authService.getCurrentUser();
-      const has_completed_onboarding = currentUser?.has_completed_onboarding || false;
-      
-      if (!has_completed_onboarding) {
-        this.showOnboardingModal = true;
-      }
-    }
-    
     // Subscribe to future route changes to update isAuthPage
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
       this.checkIfAuthPage(event.url);
-      
-      // Show onboarding modal after login if not completed
-      if (this.authService.isLoggedIn() && !this.isAuthPage) {
-        const currentUser = this.authService.getCurrentUser();
-        const has_completed_onboarding = currentUser?.has_completed_onboarding || false;
-        
-        if (!has_completed_onboarding) {
-          this.showOnboardingModal = true;
-        }
-      }
     });
     
     // Listen for content creation page load to auto-collapse sidebar
@@ -109,49 +85,16 @@ export class AppComponent implements OnInit, OnDestroy {
   }
   
   /**
-   * Toggles the mobile sidebar menu open/closed
+   * Toggle sidebar open/closed state
    */
   toggleSidebar(): void {
     this.isSidebarOpen = !this.isSidebarOpen;
     
-    // Add no-scroll class to body when sidebar is open on mobile
+    // Add/remove no-scroll class to body when sidebar is open/closed
     if (this.isSidebarOpen) {
       document.body.classList.add('no-scroll');
-      
-      // For mobile and tablet devices, ensure the sidebar is visible with a slight delay
-      // Increased the width check to capture tablets as well (1024px)
-      if (window.innerWidth <= 1024) {
-        setTimeout(() => {
-          const sidebarEl = document.querySelector('.sidebar');
-          if (sidebarEl) {
-            sidebarEl.classList.add('show');
-            
-            // For tablets and mobiles, make sure sidebar elements aren't collapsed
-            if (window.innerWidth <= 768) {
-              // Ensure dropdown arrows are visible in mobile view
-              const dropdownArrows = sidebarEl.querySelectorAll('.dropdown-arrow');
-              dropdownArrows.forEach(arrow => {
-                arrow.classList.remove('desktop-collapsed');
-              });
-              
-              // Ensure platform name is visible in mobile view
-              const platformNames = sidebarEl.querySelectorAll('.platform-name');
-              platformNames.forEach(name => {
-                name.classList.remove('desktop-collapsed');
-              });
-            }
-          }
-          
-          // Ensure the overlay is also properly shown
-          const overlayEl = document.querySelector('.sidebar-overlay');
-          if (overlayEl) {
-            overlayEl.classList.add('active');
-          }
-        }, 50);
-      }
     } else {
-      // If closing the sidebar, call the dedicated close function for consistency
-      this.closeSidebar();
+      document.body.classList.remove('no-scroll');
     }
   }
   
@@ -189,51 +132,6 @@ export class AppComponent implements OnInit, OnDestroy {
   }
   
   /**
-   * Opens the onboarding modal
-   */
-  openOnboardingModal(): void {
-    this.showOnboardingModal = true;
-  }
-  
-  /**
-   * Handler for onboarding completed event
-   * Redirects to accounts-connect page after onboarding is completed
-   */
-  onOnboardingCompleted(): void {
-    this.showOnboardingModal = false;
-    // Update user's onboarding status in the service
-    const currentUser = this.authService.getCurrentUser();
-    if (currentUser) {
-      currentUser.has_completed_onboarding = true;
-      this.authService.updateCurrentUser(currentUser);
-      
-      // For both new and existing users, redirect to accounts-connect
-      // page if they don't have any connected platforms
-      if (!currentUser.connected_platforms || currentUser.connected_platforms.length === 0) {
-        setTimeout(() => {
-          this.router.navigate(['/accounts-connect']);
-        }, 300);
-      }
-    }
-  }
-  
-  /**
-   * Handler for onboarding skipped event
-   */
-  onOnboardingSkipped(): void {
-    this.showOnboardingModal = false;
-  }
-  
-  /**
-   * Clean up resources when component is destroyed
-   */
-  ngOnDestroy(): void {
-    // Complete the destroy subject and unsubscribe from all subscriptions
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-  
-  /**
    * Optimize app performance when page is hidden
    */
   @HostListener('document:visibilitychange')
@@ -244,5 +142,10 @@ export class AppComponent implements OnInit, OnDestroy {
     if (this.isVisible) {
       this.authService.getCurrentUser();
     }
+  }
+  
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

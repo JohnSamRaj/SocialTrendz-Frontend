@@ -5,7 +5,7 @@ import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { InstagramService } from '../../core/services/instagram.service';
 import { AIService, ContentWizardData } from '../../core/services/ai.service';
 import { ToastService } from '../../shared/services/toast.service';
-import { Post, PostStatus, PostType, MediaItem, DraftPost } from '../../core/models/post.model';
+import { Post, PostStatus, PostType, MediaItem, SavedPost } from '../../core/models/post.model';
 import { PostCardComponent } from '../../shared/components/post-card/post-card.component';
 import { InstagramPreviewComponent } from '../../shared/components/instagram-preview/instagram-preview.component';
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
@@ -22,7 +22,7 @@ interface BackendPost {
   id: string;
   user_id: number;
   title: string;
-  content: string;
+  description: string;
   image_urls: string[];
   hashtags: string[];
   platform: 'instagram' | 'facebook' | 'twitter' | 'linkedin';
@@ -55,7 +55,7 @@ interface BackendPostResponse {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ContentCreationComponent implements OnInit {
-  currentTab: 'create' | 'drafts' = 'create';
+  currentTab: 'create' | 'saved' = 'create';
   connectedAccounts: ConnectedAccount[] = [];
   
   // For template access
@@ -67,7 +67,7 @@ export class ContentCreationComponent implements OnInit {
   }
   
   // New post data
-  newPost: DraftPost = {
+  newPost: SavedPost = {
     title: '',
     description: '',
     media_items: [],
@@ -91,7 +91,7 @@ export class ContentCreationComponent implements OnInit {
   
   // UI state
   hashtags = '';
-  allDrafts: Post[] = [];
+  allSaved: Post[] = [];
   selectedScheduleDate: string = '';
   selectedScheduleTime: string = '';
   user_name: string = 'yourhandle';
@@ -241,7 +241,7 @@ export class ContentCreationComponent implements OnInit {
     });
     
     // Load drafts
-    this.loadDrafts();
+    this.loadSaved();
     
     // Trigger sidebar collapse on component init
     setTimeout(() => {
@@ -396,33 +396,39 @@ export class ContentCreationComponent implements OnInit {
   
   loadPostForEditing(postId: string): void {
     this.isLoading = true;
-    this.apiService.get<BackendPostResponse>(`posts/${postId}`).subscribe({
+    this.apiService.get<{ drafts: any[] }>('post/draft/' + this.newPost.user_id).subscribe({
       next: (response) => {
-        if (response.success && response.data) {
-          const post = response.data;
-          this.newPost = {
-            title: post.title,
-            description: post.content,
-            media_items: post.image_urls.map((url: string) => ({ 
-              id: Math.random().toString(36).substr(2, 9),
-              url, 
-              type: 'image' 
-            })),
-            image_urls: post.image_urls,
-            hashtags: post.hashtags || [],
-            type: PostType.IMAGE,
-            user_id: post.user_id,
-            platform: post.platform,
-            is_draft: post.is_draft
-          };
-          this.isEditing = true;
-          this.editingPostId = postId;
-          
-          // Set schedule date/time if available
-          if (post.scheduled_at) {
-            const date = new Date(post.scheduled_at);
-            this.selectedScheduleDate = date.toISOString().split('T')[0];
-            this.selectedScheduleTime = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+        if (response.drafts && response.drafts.length > 0) {
+          const draft = response.drafts.find(d => d.id === postId);
+          if (draft) {
+            // Parse the image_url string to array
+            const imageUrls = JSON.parse(draft.image_url || '[]');
+            // Parse the hashtags string to array
+            const hashtags = JSON.parse(draft.socialAccount_post_hashtag || '[]');
+            
+            // Set the post data directly
+            this.newPost = {
+              title: '',
+              description: draft.content || '',
+              media_items: imageUrls.map((url: string) => ({ 
+                id: Math.random().toString(36).substr(2, 9),
+                url, 
+                type: 'image' as const
+              })),
+              image_urls: imageUrls,
+              hashtags: hashtags,
+              type: PostType.IMAGE,
+              user_id: this.newPost.user_id,
+              platform: 'instagram',
+              is_draft: true
+            };
+
+            // Set hashtags string for the textarea
+            this.hashtags = hashtags.join(', ');
+
+            this.isEditing = true;
+            this.editingPostId = postId;
+            this.currentTab = 'create';
           }
         }
         this.isLoading = false;
@@ -436,30 +442,37 @@ export class ContentCreationComponent implements OnInit {
     });
   }
   
-  loadDrafts(): void {
+  loadSaved(): void {
     this.isLoading = true;
-    this.apiService.get<{ success: boolean; data: BackendPost[] }>('posts', { is_draft: true }).subscribe({
+    this.apiService.get<{ drafts: any[] }>('post/draft/' + this.newPost.user_id).subscribe({
       next: (response) => {
-        if (response.success) {
-          this.allDrafts = response.data.map(post => ({
-            id: post.id,
-            title: post.title,
-            description: post.content,
-            media_items: post.image_urls.map(url => ({
-              id: Math.random().toString(36).substr(2, 9),
-              url,
-              type: 'image'
-            })),
-            image_urls: post.image_urls,
-            hashtags: post.hashtags,
-            type: PostType.IMAGE,
-            user_id: post.user_id,
-            platform: post.platform,
-            status: post.is_draft ? PostStatus.DRAFT : PostStatus.PUBLISHED,
-            is_draft: post.is_draft,
-            created_at: new Date(),
-            updated_at: new Date()
-          }));
+        if (response.drafts && response.drafts.length > 0) {
+          this.allSaved = response.drafts.map(draft => {
+            // Parse the image_url string to array
+            const imageUrls = JSON.parse(draft.image_url || '[]');
+            // Parse the hashtags string to array
+            const hashtags = JSON.parse(draft.socialAccount_post_hashtag || '[]');
+            
+            return {
+              id: draft.id,
+              title: '',
+              description: draft.content || '',
+              hashtags: hashtags,
+              media_items: imageUrls.map((url: string) => ({
+                id: Math.random().toString(36).substr(2, 9),
+                url,
+                type: 'image' as const
+              })),
+              image_urls: imageUrls,
+              type: PostType.IMAGE,
+              user_id: this.newPost.user_id,
+              platform: 'instagram',
+              status: PostStatus.SAVED,
+              is_draft: true,
+              created_at: new Date(),
+              updated_at: new Date()
+            };
+          });
         }
         this.isLoading = false;
         this.cdr.markForCheck();
@@ -472,10 +485,10 @@ export class ContentCreationComponent implements OnInit {
     });
   }
   
-  switchTab(tab: 'create' | 'drafts'): void {
+  switchTab(tab: 'create' | 'saved'): void {
     this.currentTab = tab;
-    if (tab === 'drafts') {
-      this.loadDrafts();
+    if (tab === 'saved') {
+      this.loadSaved();
     }
   }
   
@@ -565,36 +578,82 @@ export class ContentCreationComponent implements OnInit {
       .filter(tag => tag.length > 0);
   }
   
-  saveAsDraft(): void {
+  saved(): void {
     if (!this.validateForm()) return;
 
     this.isSaving = true;
-    const postData = {
-      user_id: this.newPost.user_id,
-      title: this.newPost.description.substring(0, 100),
-      content: this.newPost.description,
-      image_urls: this.newPost.media_items.map(item => item.url),
-      hashtags: this.newPost.hashtags,
-      platform: this.newPost.platform,
-      is_draft: true
-    };
 
-    this.apiService.post<BackendPostResponse>('posts', postData).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.toastService.success('Post saved as draft successfully');
-          this.resetForm();
-          this.loadDrafts();
-        }
+    // First upload all media files
+    const uploadPromises = this.mediaFiles.map(file => this.uploadImageToPublicUrl(file));
+
+    Promise.all(uploadPromises)
+      .then(uploadedUrls => {
+        const postData = {
+          user_id: this.newPost.user_id,
+          content: this.newPost.description,
+          image_url: uploadedUrls,
+          hashtags: this.newPost.hashtags,
+          platform: this.newPost.platform,
+          is_draft: true
+        };
+
+        this.apiService.post<BackendPostResponse>('post/save-draft', postData).subscribe({
+          next: (response) => {
+            const successMessage = response.data?.id 
+              ? `Draft saved successfully! (ID: ${response.data.id})`
+              : 'Draft saved successfully!';
+            this.toastService.success(successMessage);
+            
+            this.resetForm();
+            this.currentTab = 'saved';
+            
+            // Fetch the latest draft
+            this.apiService.get<{ success: boolean; data: BackendPost[] }>('post/draft/' + this.newPost.user_id).subscribe({
+              next: (draftResponse) => {
+                if (draftResponse.success && draftResponse.data.length > 0) {
+                  const latestDraft = draftResponse.data[0];
+                  this.allSaved = [{
+                    id: latestDraft.id,
+                    title: latestDraft.title || '',
+                    description: latestDraft.description || '',
+                    hashtags: latestDraft.hashtags || [],
+                    media_items: latestDraft.image_urls.map(url => ({
+                      id: Math.random().toString(36).substr(2, 9),
+                      url,
+                      type: 'image' as const
+                    })),
+                    image_urls: latestDraft.image_urls,
+                    type: PostType.IMAGE,
+                    user_id: latestDraft.user_id,
+                    platform: latestDraft.platform,
+                    status: PostStatus.SAVED,
+                    is_draft: true,
+                    created_at: new Date(),
+                    updated_at: new Date()
+                  }];
+                }
+                this.isSaving = false;
+                this.cdr.markForCheck();
+              },
+              error: (error) => {
+                this.toastService.error(error.message || 'Failed to load saved draft');
+                this.isSaving = false;
+                this.cdr.markForCheck();
+              }
+            });
+          },
+          error: (error) => {
+            this.toastService.error(error.message || 'Failed to save draft');
+            this.isSaving = false;
+            this.cdr.markForCheck();
+          }
+        });
+      })
+      .catch(error => {
+        this.toastService.error('Failed to upload images');
         this.isSaving = false;
         this.cdr.markForCheck();
-      },
-      error: (error) => {
-        this.toastService.error(error.message || 'Failed to save draft');
-        this.isSaving = false;
-        this.cdr.markForCheck();
-      }
-    });
+      });
   }
   
   schedulePost(): void {
@@ -623,7 +682,7 @@ export class ContentCreationComponent implements OnInit {
         if (response.success) {
           this.toastService.success('Post scheduled successfully');
           this.resetForm();
-          this.loadDrafts();
+          this.loadSaved();
         }
         this.isSaving = false;
         this.cdr.markForCheck();
@@ -674,7 +733,7 @@ export class ContentCreationComponent implements OnInit {
           if (response.success) {
             this.toastService.success('Post published successfully');
             this.resetForm();
-            this.loadDrafts();
+            this.loadSaved();
           } else {
             this.handlePublishError(response.error || 'Failed to publish post');
           }
@@ -777,7 +836,7 @@ export class ContentCreationComponent implements OnInit {
       image_urls: [],
       hashtags: [],
       type: PostType.IMAGE,
-      user_id: this.newPost.user_id,
+      user_id: this.currentUser?.id || 0,
       platform: 'instagram',
       is_draft: true
     };
@@ -821,35 +880,35 @@ export class ContentCreationComponent implements OnInit {
     return item.id;
   }
   
-  editDraft(post: Post): void {
+  editSaved(post: Post): void {
     this.loadPostForEditing(post.id);
     this.currentTab = 'create';
   }
   
-  deleteDraft(post: Post): void {
-    if (confirm('Are you sure you want to delete this draft?')) {
+  deleteSaved(post: Post): void {
+    if (confirm('Are you sure you want to delete this saved post?')) {
       this.apiService.delete<BackendPostResponse>(`posts/${post.id}`).subscribe({
         next: (response) => {
           if (response.success) {
-            this.toastService.success('Draft deleted successfully');
-            this.loadDrafts();
+            this.toastService.success('Saved post deleted successfully');
+            this.loadSaved();
           }
           this.cdr.markForCheck();
         },
         error: (error) => {
-          this.toastService.error(error.message || 'Failed to delete draft');
+          this.toastService.error(error.message || 'Failed to delete saved post');
           this.cdr.markForCheck();
         }
       });
     }
   }
   
-  scheduleDraft(data: { post: Post, date: Date }): void {
+  scheduleSaved(data: { post: Post, date: Date }): void {
     this.toastService.info('Scheduling post...');
     this.instagramService.schedulePost(data.post.id, data.date).subscribe({
       next: () => {
         this.toastService.success('Post scheduled successfully');
-        this.loadDrafts();
+        this.loadSaved();
       },
       error: (err) => {
         this.error = 'Failed to schedule post';
@@ -859,12 +918,12 @@ export class ContentCreationComponent implements OnInit {
     });
   }
   
-  publishDraft(post: Post): void {
+  publishSaved(post: Post): void {
     this.toastService.info('Publishing post...');
     this.instagramService.publishPost(post.id).subscribe({
       next: () => {
         this.toastService.success('Post published successfully');
-        this.loadDrafts();
+        this.loadSaved();
       },
       error: (err) => {
         this.error = 'Failed to publish post';

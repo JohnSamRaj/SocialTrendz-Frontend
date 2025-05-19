@@ -24,6 +24,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { Router } from '@angular/router';
 import { OnboardingQuestionsService } from '../../services/onboarding-questions.service';
 import { finalize } from 'rxjs/operators';
+import { ToastService } from '../../services/toast.service';
 import { 
   OnboardingQuestion, 
   QuestionType, 
@@ -44,20 +45,25 @@ export class OnboardingModalComponent implements OnInit {
       const currentUser = this.authService.getCurrentUser();
       const has_completed_onboarding = currentUser?.has_completed_onboarding || false;
       const has_seen_onboarding = sessionStorage.getItem('has_seen_onboarding') === 'true';
+      const isManuallyTriggered = sessionStorage.getItem('manually_triggered_onboarding') === 'true';
       
-      // Hide if user has completed onboarding or has seen it this session
-      if (has_completed_onboarding || has_seen_onboarding) {
+      // Show modal if:
+      // 1. It's manually triggered (Get Started button clicked)
+      // 2. User hasn't completed onboarding AND hasn't seen it this session
+      if (isManuallyTriggered || (!has_completed_onboarding && !has_seen_onboarding)) {
+        this.isVisible = true;
+        this.showIntro = true;
+        this.showOutro = false;
+        this.currentQuestionIndex = 0;
+        
+        // Only set the session storage flag if it's not manually triggered
+        if (!isManuallyTriggered) {
+          sessionStorage.setItem('has_seen_onboarding', 'true');
+        }
+      } else {
         this.isVisible = false;
         this.visibleChange.emit(false);
-        return;
       }
-      
-      this.isVisible = true;
-      this.showIntro = true;
-      this.showOutro = false;
-      this.currentQuestionIndex = 0;
-      // Mark that user has seen onboarding this session
-      sessionStorage.setItem('has_seen_onboarding', 'true');
     } else {
       this.isVisible = false;
     }
@@ -87,7 +93,8 @@ export class OnboardingModalComponent implements OnInit {
     private fb: FormBuilder,
     private authService: AuthService,
     private onboardingService: OnboardingQuestionsService,
-    private router: Router
+    private router: Router,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -373,8 +380,13 @@ export class OnboardingModalComponent implements OnInit {
    * Skip the entire onboarding process
    */
   skipAll(): void {
+    // Clear all onboarding-related session storage flags
+    sessionStorage.removeItem('manually_triggered_onboarding');
+    sessionStorage.removeItem('has_seen_onboarding');
+    
     this.hide();
     this.skipped.emit();
+    this.toastService.info('You can complete the onboarding process later by clicking the "Get Started" button.');
   }
 
   /**
@@ -397,10 +409,13 @@ export class OnboardingModalComponent implements OnInit {
           // Update onboarding status to completed
           this.authService.updateOnboardingStatus(true).subscribe({
             next: () => {
+              // Clear all onboarding-related session storage flags
+              sessionStorage.removeItem('manually_triggered_onboarding');
+              sessionStorage.removeItem('has_seen_onboarding');
+              
               this.hide();
               this.completed.emit(true);
-              // Keep the session storage flag since we want to prevent showing onboarding again this session
-              this.router.navigate(['/accounts-connect']);
+              this.router.navigate(['/dashboard']);
             },
             error: (err: Error) => {
               console.error('Error updating onboarding status:', err);

@@ -1,5 +1,5 @@
 export enum PostStatus {
-  DRAFT = 'draft',
+  SAVED = 'saved',
   SCHEDULED = 'scheduled',
   PUBLISHED = 'published',
   FAILED = 'failed'
@@ -49,7 +49,7 @@ export interface PostEngagement {
   reach: number;
 }
 
-export interface DraftPost {
+export interface SavedPost {
   user_id: number;
   title: string;
   description: string;

@@ -7,7 +7,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Post, DraftPost, PostStatus } from '../models/post.model';
+import { Post, SavedPost, PostStatus } from '../models/post.model';
 import { ConnectedAccount } from '../models/connected-account.model';
 import { AnalyticsOverview } from '../models/analytics.model';
 import { DataService } from './data.service';
@@ -52,9 +52,9 @@ export class InstagramService {
    * Gets only draft posts
    * @returns Observable of draft posts
    */
-  getDraftPosts(): Observable<Post[]> {
+  getSavedPosts(): Observable<Post[]> {
     return this.dataService.getPosts(this.getCurrentUserId()).pipe(
-      map(posts => posts.filter(post => post.status === PostStatus.DRAFT))
+      map(posts => posts.filter(post => post.status === PostStatus.SAVED))
     );
   }
 
@@ -88,9 +88,9 @@ export class InstagramService {
    * @param post Post data
    * @returns Observable with created post
    */
-  createPost(post: DraftPost): Observable<Post> {
+  createPost(post: SavedPost): Observable<Post> {
     // Ensure the platform is set to Instagram
-    const instagramPost: DraftPost = {
+    const instagramPost: SavedPost = {
       ...post,
       platform: 'instagram'
     };

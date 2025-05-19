@@ -65,6 +65,7 @@ export class AuthService {
         } as User;
         this.storeUserData(user);
         this.currentUserSubject.next(user);
+        sessionStorage.setItem('is_first_login', 'true');
         return { user, needsOtpVerification: false };
       }),
       catchError(error => throwError(() => new Error('Login failed: ' + error.message)))
@@ -132,6 +133,7 @@ export class AuthService {
       map(response => {
         this.storeUserData(response.user);
         this.currentUserSubject.next(response.user);
+        sessionStorage.setItem('is_first_login', 'true');
         return response;
       })
     );
@@ -170,6 +172,7 @@ export class AuthService {
       map(response => {
         this.storeUserData(response.user);
         this.currentUserSubject.next(response.user);
+        sessionStorage.setItem('is_first_login', 'true');
         return response;
       })
     );
@@ -185,7 +188,8 @@ export class AuthService {
 
   private handleLogoutSuccess(): void {
     localStorage.removeItem(this.STORAGE_KEYS.CURRENT_USER);
-    // localStorage.removeItem(this.STORAGE_KEYS.ONBOARDING_COMPLETED);
+    // Clear session storage for onboarding
+    sessionStorage.removeItem('has_seen_onboarding');
     this.currentUserSubject.next(null);
     this.router.navigate(['/auth']);
   }

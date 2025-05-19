@@ -143,8 +143,8 @@ export class CalendarComponent implements OnInit {
       return 'post-published';
     } else if (post.status === PostStatus.SCHEDULED) {
       return 'post-scheduled';
-    } else if (post.status === PostStatus.DRAFT) {
-      return 'post-draft';
+    } else if (post.status === PostStatus.SAVED) {
+      return 'post-saved';
     } else {
       return 'post-failed';
     }

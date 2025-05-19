@@ -55,8 +55,8 @@ export class DashboardComponent implements OnInit {
     return this.posts.filter(post => post.status === PostStatus.SCHEDULED).length;
   }
 
-  getDraftPostsCount(): number {
-    return this.posts.filter(post => post.status === PostStatus.DRAFT).length;
+  getSavedPostsCount(): number {
+    return this.posts.filter(post => post.status === PostStatus.SAVED).length;
   }
 
   getPublishedPostsCount(): number {
@@ -79,7 +79,7 @@ export class DashboardComponent implements OnInit {
           .slice(0, 4);
 
         this.draftPosts = posts
-          .filter(post => post.status === PostStatus.DRAFT)
+          .filter(post => post.status === PostStatus.SAVED)
           .slice(0, 3);
 
         this.scheduledPosts = posts
@@ -237,28 +237,27 @@ export class DashboardComponent implements OnInit {
   }
 
   showOnboardingModal(): void {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser?.has_completed_onboarding) {
+    // Set the manual trigger flag
+    sessionStorage.setItem('manually_triggered_onboarding', 'true');
+    // Show the onboarding modal
       this.isOnboardingModalVisible = true;
-      // Clear any session storage flags to ensure modal shows
-      sessionStorage.removeItem('has_seen_onboarding');
-    } else {
-      this.toastService.info('You have already completed the onboarding process.');
-    }
   }
 
   onOnboardingCompleted(): void {
     this.isOnboardingModalVisible = false;
-    const currentUser = this.authService.getCurrentUser();
-    if (currentUser) {
-      currentUser.has_completed_onboarding = true;
-      this.authService.updateCurrentUser(currentUser);
-    }
+    // Clear all onboarding-related flags
+    sessionStorage.removeItem('manually_triggered_onboarding');
+    sessionStorage.removeItem('has_seen_onboarding');
+    sessionStorage.removeItem('is_first_login');
     this.loadDashboardData();
   }
 
   onOnboardingSkipped(): void {
     this.isOnboardingModalVisible = false;
+    // Clear all onboarding-related flags
+    sessionStorage.removeItem('manually_triggered_onboarding');
+    sessionStorage.removeItem('has_seen_onboarding');
+    sessionStorage.removeItem('is_first_login');
   }
 
   ngOnInit(): void {
@@ -270,6 +269,18 @@ export class DashboardComponent implements OnInit {
     
     // Check connected accounts
     this.checkConnectedAccounts();
+    
+    // Check if we need to show onboarding (only after login)
+    const currentUser = this.authService.getCurrentUser();
+    const has_completed_onboarding = currentUser?.has_completed_onboarding || false;
+    const has_seen_onboarding = sessionStorage.getItem('has_seen_onboarding') === 'true';
+    const isFirstLogin = sessionStorage.getItem('is_first_login') === 'true';
+    
+    if (!has_completed_onboarding && !has_seen_onboarding && isFirstLogin) {
+      this.isOnboardingModalVisible = true;
+      // Clear the first login flag
+      sessionStorage.removeItem('is_first_login');
+    }
     
     // Show welcome message after a short delay
     setTimeout(() => {

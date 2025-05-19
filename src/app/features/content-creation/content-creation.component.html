@@ -16,10 +16,10 @@
       </button>
       <button 
         class="tab-button" 
-        [class.active]="currentTab === 'drafts'"
-        (click)="switchTab('drafts')"
+        [class.active]="currentTab === 'saved'"
+        (click)="switchTab('saved')"
       >
-        <i class="fas fa-save"></i> My Drafts
+        <i class="fas fa-save"></i> Saved
       </button>
     </div>
     <div class="content-wizard-btn-wrapper">
@@ -240,14 +240,14 @@
       <div class="form-section">
         <div class="section-header">
           <h3>Description</h3>
-          <button 
+          <!-- <button 
             class="ai-generate-btn" 
             (click)="generateDescription()" 
             [disabled]="isGeneratingDescription"
           >
             <i class="fas" [class.fa-robot]="!isGeneratingDescription" [class.fa-spinner]="isGeneratingDescription" [class.fa-spin]="isGeneratingDescription"></i>
             {{ isGeneratingDescription ? 'Generating...' : 'Generate with AI' }}
-          </button>
+          </button> -->
         </div>
         
         <textarea 
@@ -277,14 +277,14 @@
       <div class="form-section">
         <div class="section-header">
           <h3>Hashtags</h3>
-          <button 
+          <!-- <button 
             class="ai-generate-btn" 
             (click)="generateHashtags()" 
             [disabled]="isGeneratingHashtags"
           >
             <i class="fas" [class.fa-hashtag]="!isGeneratingHashtags" [class.fa-spinner]="isGeneratingHashtags" [class.fa-spin]="isGeneratingHashtags"></i>
             {{ isGeneratingHashtags ? 'Generating...' : 'Generate with AI' }}
-          </button>
+          </button> -->
         </div>
         
         <textarea 
@@ -358,12 +358,12 @@
           <div class="action-buttons">
             <button 
               class="btn-outline save-draft-btn" 
-              (click)="saveAsDraft()" 
+              (click)="saved()" 
               [disabled]="isSaving"
             >
               <i *ngIf="isSaving" class="fas fa-spinner fa-spin"></i>
               <i *ngIf="!isSaving" class="fas fa-save"></i>
-              {{ isSaving ? 'Saving...' : 'Save as Draft' }}
+              {{ isSaving ? 'Saving...' : 'Saved' }}
             </button>
             
             <button 
@@ -382,32 +382,32 @@
   </div>
 
   <!-- Drafts Tab -->
-  <div class="drafts-content" *ngIf="currentTab === 'drafts' && !isLoading">
-    <div class="drafts-header">
-      <h2>My Drafts</h2>
-      <button class="btn-primary new-draft-btn" (click)="switchTab('create')">
-        <i class="fas fa-plus"></i> Create New Draft
+  <div class="saved-content" *ngIf="currentTab === 'saved' && !isLoading">
+    <div class="saved-header">
+      <h2>My Saved</h2>
+      <button class="btn-primary new-saved-btn" (click)="switchTab('create')">
+        <i class="fas fa-plus"></i> Create New Saved
       </button>
     </div>
     
-    <div class="drafts-grid" *ngIf="allDrafts.length > 0">
+    <div class="saved-grid" *ngIf="allSaved.length > 0">
       <app-post-card 
-        *ngFor="let draft of allDrafts; trackBy: trackByPostId" 
-        [post]="draft"
-        (edit)="editDraft($event)"
-        (delete)="deleteDraft($event)"
-        (publish)="publishDraft($event)"
-        (schedule)="scheduleDraft($event)"
+        *ngFor="let saved of allSaved; trackBy: trackByPostId" 
+        [post]="saved"
+        (edit)="editSaved($event)"
+        (delete)="deleteSaved($event)"
+        (publish)="publishSaved($event)"
+        (schedule)="scheduleSaved($event)"
       ></app-post-card>
     </div>
     
-    <div class="empty-drafts" *ngIf="allDrafts.length === 0">
+    <div class="empty-saved" *ngIf="allSaved.length === 0">
       <div class="empty-icon">
         <i class="fas fa-file-alt"></i>
       </div>
-      <h3>No drafts yet</h3>
-      <p>Create your first draft to see it here</p>
-      <button class="btn-primary" (click)="switchTab('create')">Create Draft</button>
+      <h3>No Saved yet</h3>
+      <p>Create your first saved to see it here</p>
+      <button class="btn-primary" (click)="switchTab('create')">Create Saved</button>
     </div>
   </div>
 </div>
